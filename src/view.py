@@ -1,39 +1,39 @@
 import pygame
 
-HEIGHT = 600
-WIDTH = 800
+HEIGHT = 600  # Chiều cao window
+WIDTH = 800   # Chiều rộng window
 
-BOARD_SIZE = 500  # 5 nodes x 100px
-NODE_SIZE = 100
-BORDER_WIDTH = 1
+BOARD_SIZE = 500  # Kích thước board (5 nodes x 100px)
+NODE_SIZE = 100   # Kích thước mỗi ô
+BORDER_WIDTH = 1  # Độ dày viền ô
 
-BG_COLOR = (0, 0, 0)
-WHITE = (255, 255, 255)
-BLUE_COLOR = (90, 188, 236)
-RED_COLOR = (235, 112, 102)
+BG_COLOR = (0, 0, 0)      # Màu nền: đen
+WHITE = (255, 255, 255)   # Màu viền ô
+BLUE_COLOR = (90, 188, 236)  # Màu dot xanh
+RED_COLOR = (235, 112, 102)  # Màu dot đỏ
 
 def drawScreen():
+    # Khởi tạo cửa sổ game
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
     SCREEN.fill(BG_COLOR)
     pygame.display.set_caption("Color Wars")
     return SCREEN
 
 def drawBoard(SCREEN, BOARD, DOTS):
+    # Tính toán vị trí bắt đầu
     start_x = (WIDTH - BOARD_SIZE) // 2
     start_y = (HEIGHT - BOARD_SIZE) // 2
 
     for i in range(5):
         for j in range(5):
-
             x = start_x + i * NODE_SIZE
             y = start_y + j * NODE_SIZE
-
             rect = (x, y, NODE_SIZE, NODE_SIZE)
             drawNode(SCREEN, rect)
-
+            # Vẽ dot xanh nếu ô thuộc BLUE
             if BOARD[j][i] == 1:
                 drawDot(SCREEN, x, y, 1, BLUE_COLOR)
-
+            # Vẽ dot theo số lượng và màu người chơi
             if DOTS[j][i] > 0:
                 color = BLUE_COLOR if BOARD[j][i] == 1 else RED_COLOR
                 drawDot(SCREEN, x, y, DOTS[j][i], color)
@@ -47,11 +47,9 @@ def drawDot(SCREEN, x, y, count, color):
 
     if count == 1:
         pygame.draw.circle(SCREEN, color, (cx, cy), 10)
-
     elif count == 2:
         pygame.draw.circle(SCREEN, color, (cx-15, cy), 10)
         pygame.draw.circle(SCREEN, color, (cx+15, cy), 10)
-
     elif count == 3:
         pygame.draw.circle(SCREEN, color, (cx-15, cy), 10)
         pygame.draw.circle(SCREEN, color, (cx+15, cy), 10)
