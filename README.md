@@ -1,40 +1,60 @@
+# Color Wars
 
-# Color Wars - Game chiến thuật
+Game chien thuat theo luot 2 nguoi choi (Blue vs Red) viet bang Pygame.
 
-## Giới thiệu
-Color Wars là một game chiến thuật theo lượt, mô phỏng cuộc chiến giữa hai người chơi (Xanh và Đỏ) trên một bàn cờ 5x5. Mỗi người chơi sẽ đặt các dot (chấm) vào ô, khi số dot đạt ngưỡng sẽ gây nổ, lan sang các ô lân cận và đồng hóa ô đối phương. Mục tiêu là kiểm soát toàn bộ bàn cờ.
+## Tinh nang hien tai
 
-## Cách hoạt động & các bước xử lý
-1. **Khởi tạo**:
-	- Sử dụng Pygame để tạo cửa sổ game.
-	- Tạo board 5x5 gồm hai ma trận: `BOARD` (chủ sở hữu ô), `DOTS` (số dot trong ô).
+- Ban co 5x5, can giua man hinh.
+- Moi luot, nguoi choi dat dot vao:
+  - O trong, hoac
+  - O do chinh minh dang chiem.
+- Co che no day chuyen va dong hoa o lan can.
+- HUD hien thi:
+  - So o Blue dang chiem
+  - So o Red dang chiem
+  - Luot hien tai hoac nguoi thang
 
-2. **Vẽ board**:
-	- Hàm `drawBoard` vẽ từng ô, viền và các dot theo trạng thái hiện tại.
-	- Chỉ vẽ dot cho ô còn thuộc về người chơi và có dot.
+## Luat no va dong hoa
 
-3. **Xử lý click**:
-	- Khi người chơi click vào ô, kiểm tra hợp lệ (ô trống hoặc của mình).
-	- Thêm dot vào ô, chuyển lượt cho người chơi tiếp theo.
+- Moi o co suc chua tuy vi tri:
+  - Goc: 2
+  - Canh: 3
+  - Giua: 4
+- Khi dot trong o dat nguong suc chua:
+  - O do no, bi xoa toan bo dot va tro ve trong.
+  - Dot duoc phan tan ra 4 huong (tren, duoi, trai, phai).
+  - O bi trung se bi dong hoa ve mau cua ben gay no va cong them 1 dot.
+  - Neu o lan can dat nguong, tiep tuc no day chuyen.
 
-4. **Logic nổ và đồng hóa**:
-	- Nếu số dot đạt ngưỡng (4), ô sẽ nổ: xóa dot và chủ sở hữu.
-	- Dot lan sang 4 ô lân cận, đồng hóa ô trống hoặc ô đối phương.
-	- Kiểm tra chuỗi nổ liên tiếp.
+## Dieu kien thang thua
 
-5. **Cập nhật hiển thị**:
-	- Sau mỗi lượt, board được vẽ lại, loại bỏ dot ở ô đã nổ hoặc bị đồng hóa.
+- Sau giai doan mo dau, mot ben thang khi ben con lai bi an sach.
+- Cu the theo yeu cau du an:
+  - Neu Red da tung co o tren san ma hien tai Red = 0 o, Blue thang.
+  - Nguoc lai tuong tu cho Blue.
 
-## Hướng dẫn chạy game
-1. Cài đặt Python và Pygame:
-    https://www.python.org/downloads/
-	```bash
-	pip install pygame
-	```
-2. Chạy game:
-	```bash
-	python src/main.py
-	```
+## Cau truc ma nguon
 
-## Liên kết tài liệu
-[Giới thiệu sơ bộ](https://docs.google.com/document/d/18cPllvrMK9fyZQlwbo_KntGp_xMdruhEOYKIm8ZsenQ/edit?usp=sharing)
+- `src/main.py`: diem vao ung dung (init/quit pygame).
+- `src/controller.py`: game state va logic (input, no day chuyen, tinh diem, xac dinh winner).
+- `src/view.py`: phan UI/render (ve board, dot, HUD, map vi tri chuot -> o).
+
+## Chay du an
+
+1. Cai Python 3.10+.
+1. Cai dependency:
+
+```bash
+pip install pygame
+```
+
+1. Chay game:
+
+```bash
+python src/main.py
+```
+
+## Ghi chu ky thuat
+
+- Man hinh duoc `fill` moi frame de tranh bong hinh (render ghosting).
+- Logic va UI duoc tach ro de de mo rong scene, them menu, restart, AI.

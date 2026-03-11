@@ -1,97 +1,138 @@
+from collections import deque
+
 import pygame
 import view
 
-BOARD_SIZE = 5  # Kích thước lưới (5x5)
-EXPLODE_DOTS = 4  # Số dot để ô nổ
-PLAYER_BLUE = 1  # Giá trị đại diện cho người chơi xanh
-PLAYER_RED = 2   # Giá trị đại diện cho người chơi đỏ
+GRID_SIZE = 5
+EMPTY = 0
+PLAYER_BLUE = 1
+PLAYER_RED = 2
+MIN_TURNS_FOR_WIN_CHECK = 2
+FPS = 60
 
-# Trạng thái board: BOARD lưu chủ sở hữu ô, DOTS lưu số dot trong ô
-BOARD = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
-DOTS  = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+BOARD = [[EMPTY for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+DOTS = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
-# Người chơi hiện tại
 current_player = PLAYER_BLUE
+turn_count = 0
+winner = None
+blue_has_occupied = False
+red_has_occupied = False
 
-def explode(row, col):
 
-    # Nếu số dot chưa đủ để nổ thì thoát
-    if DOTS[row][col] < EXPLODE_DOTS:
+def in_bounds(row, col):
+    return 0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE
+
+
+def get_cell_capacity(row, col):
+    capacity = 4
+    if row in (0, GRID_SIZE - 1):
+        capacity -= 1
+    if col in (0, GRID_SIZE - 1):
+        capacity -= 1
+    return capacity
+
+
+def get_scores():
+    blue_cells = 0
+    red_cells = 0
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            if BOARD[row][col] == PLAYER_BLUE:
+                blue_cells += 1
+            elif BOARD[row][col] == PLAYER_RED:
+                red_cells += 1
+    return blue_cells, red_cells
+
+
+def update_winner():
+    global winner, blue_has_occupied, red_has_occupied
+    blue_cells, red_cells = get_scores()
+
+    # Phải có ít nhất 1 ô mới được chơi tiếp
+    if blue_cells > 0:
+        blue_has_occupied = True
+    if red_cells > 0:
+        red_has_occupied = True
+
+    # Tránh kết thúc ván quá sớm trước khi hai bên nhập cuộc.
+    if turn_count < MIN_TURNS_FOR_WIN_CHECK:
         return
 
-    player = BOARD[row][col]
+    # Một bên bị ăn sạch (đã từng có quân nhưng hiện không còn ô nào) => thua.
+    if blue_has_occupied and blue_cells == 0 and red_cells > 0:
+        winner = PLAYER_RED
+    elif red_has_occupied and red_cells == 0 and blue_cells > 0:
+        winner = PLAYER_BLUE
 
-    # Xóa hết dot và chủ sở hữu ô vừa nổ
-    DOTS[row][col] = 0
-    BOARD[row][col] = 0
 
-    # Đánh dấu ô vừa nổ để không nhận dot lại trong chuỗi nổ
-    exploded_cells = set()
-    exploded_cells.add((row, col))
+def resolve_explosions(start_row, start_col):
+    queue = deque([(start_row, start_col)])
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    # 4 hướng lân cận
-    directions = [
-        (-1,0),
-        (1,0),
-        (0,-1),
-        (0,1)
-    ]
+    while queue:
+        row, col = queue.popleft()
+        owner = BOARD[row][col]
+        if owner == EMPTY:
+            continue
 
-    for dr, dc in directions:
-        r = row + dr
-        c = col + dc
-        if 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE:
-            # Không phân dot về ô vừa nổ
-            if (r, c) in exploded_cells:
+        if DOTS[row][col] < get_cell_capacity(row, col):
+            continue
+
+        DOTS[row][col] = 0
+        BOARD[row][col] = EMPTY
+
+        for dr, dc in directions:
+            nr, nc = row + dr, col + dc
+            if not in_bounds(nr, nc):
                 continue
-            # Ô trống: đồng hóa và cộng 1 dot
-            if BOARD[r][c] == 0:
-                BOARD[r][c] = player
-                DOTS[r][c] += 1
-            # Ô đồng minh: chỉ cộng 1 dot
-            elif BOARD[r][c] == player:
-                DOTS[r][c] += 1
-            # Ô địch: đồng hóa và cộng 1 dot
-            else:
-                BOARD[r][c] = player
-                DOTS[r][c] += 1
-            # Kiểm tra tiếp nếu ô vừa nhận dot đủ để nổ
-            explode(r, c)
 
-def handleClick(pos):
-    global current_player
+            # Đồng hóa mục tiêu
+            BOARD[nr][nc] = owner
+            DOTS[nr][nc] += 1
 
-    start_x = (view.WIDTH - view.BOARD_SIZE) // 2
-    start_y = (view.HEIGHT - view.BOARD_SIZE) // 2
+            if DOTS[nr][nc] >= get_cell_capacity(nr, nc):
+                queue.append((nr, nc))
 
-    x, y = pos
 
-    # Xác định vị trí ô được click
-    col = (x - start_x) // view.NODE_SIZE
-    row = (y - start_y) // view.NODE_SIZE
+def try_place_dot(mouse_pos):
+    global current_player, turn_count
 
-    # Chỉ xử lý nếu click trong board
-    if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
-        # Chỉ cho phép đặt dot vào ô trống hoặc ô của mình
-        if BOARD[row][col] in (0, current_player):
-            BOARD[row][col] = current_player
-            DOTS[row][col] += 1
-            # Kiểm tra nổ
-            explode(row, col)
-            # Chuyển lượt cho người chơi tiếp theo
-            current_player = PLAYER_RED if current_player == PLAYER_BLUE else PLAYER_BLUE
+    if winner is not None:
+        return
+
+    row, col = view.get_cell_from_mouse(mouse_pos, GRID_SIZE)
+    if row is None or col is None:
+        return
+
+    if BOARD[row][col] not in (EMPTY, current_player):
+        return
+
+    BOARD[row][col] = current_player
+    DOTS[row][col] += 1
+
+    resolve_explosions(row, col)
+
+    turn_count += 1
+    update_winner()
+
+    if winner is None:
+        current_player = PLAYER_RED if current_player == PLAYER_BLUE else PLAYER_BLUE
+
 
 def runGame():
-    SCREEN = view.drawScreen()
+    screen = view.drawScreen()
+    clock = pygame.time.Clock()
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                handleClick(event.pos)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                try_place_dot(event.pos)
 
-        view.drawBoard(SCREEN, BOARD, DOTS)
-        
+        blue_score, red_score = get_scores()
+        view.drawScene(screen, BOARD, DOTS, current_player, blue_score, red_score, winner)
         pygame.display.flip()
+        clock.tick(FPS)

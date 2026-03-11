@@ -2,12 +2,11 @@ import pygame
 import sys
 import controller
 
-# Khởi tạo pygame
-pygame.init()
+def main():
+	pygame.init()
+	controller.runGame()
+	pygame.quit()
+	sys.exit()
 
-# Chạy game
-controller.runGame()
-
-# Kết thúc pygame và thoát chương trình
-pygame.quit()
-sys.exit()
+if __name__ == "__main__":
+    main()
