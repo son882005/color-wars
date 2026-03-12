@@ -98,9 +98,11 @@ def resolve_explosions(start_row, start_col):
 def try_place_dot(mouse_pos):
     global current_player, turn_count
 
+    # Nếu đã có người thắng, không cho đặt thêm quân nào nữa.
     if winner is not None:
         return
 
+    # Lấy ô lưới từ vị trí chuột, nếu click ngoài lưới thì bỏ qua.
     row, col = view.get_cell_from_mouse(mouse_pos, GRID_SIZE)
     if row is None or col is None:
         return

@@ -17,11 +17,13 @@ EMPTY = 0
 PLAYER_BLUE = 1
 PLAYER_RED = 2
 
+# Đặt lại các biến toàn cục để tránh lỗi khi chạy lại ván mới.
 def get_board_origin():
     start_x = (WIDTH - BOARD_SIZE) // 2
     start_y = (HEIGHT - BOARD_SIZE) // 2
     return start_x, start_y
 
+# Lấy ô lưới từ vị trí chuột, nếu click ngoài lưới thì trả về None.
 def get_cell_from_mouse(mouse_pos, grid_size):
     start_x, start_y = get_board_origin()
     x, y = mouse_pos
