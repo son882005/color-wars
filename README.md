@@ -1,9 +1,8 @@
 # Color Wars
 
-Game chien thuat theo luot viet bang Pygame, ho tro 2 che do:
-
-- `pvbot`: nguoi choi Blue vs AI Red (mac dinh)
-- `pvp`: 2 nguoi choi cung may (Blue va Red)
+Game chien thuat theo luot viet bang Pygame.
+Game khoi dong o mode mac dinh `pvbot` (Blue vs AI Red),
+co the chuyen sang `pvp` ngay trong UI bang phim tat.
 
 ## Tinh nang hien tai
 
@@ -17,9 +16,10 @@ Game chien thuat theo luot viet bang Pygame, ho tro 2 che do:
   - Khong duoc dat vao o trong nua.
 - Co che no day chuyen va dong hoa o lan can.
 - HUD hien thi:
-  - So o Blue dang chiem
-  - So o Red dang chiem
-  - Luot hien tai hoac nguoi thang
+  - Diem Blue/Red o phia tren board
+  - Mode + luot hien tai/nguoi thang o ben trai board
+  - Huong dan phim tat o ben phai board
+  - Tu dong co gian co chu HUD de tranh tran khi doi kich thuoc cua so
 
 ## Luat no va dong hoa
 
@@ -71,14 +71,13 @@ pip install -r requirements.txt
 1. Chay game:
 
 ```bash
-python -m src.main --mode pvbot
+python -m src.main
 ```
 
-Hoac che do 2 nguoi choi:
+## Phim tat trong game
 
-```bash
-python -m src.main --mode pvp
-```
+- `M`: Chuyen nhanh giua `pvp` va `pvbot` (dong thoi reset van moi).
+- `R`: Restart van hien tai (giu nguyen mode).
 
 ## Ghi chu ky thuat
 

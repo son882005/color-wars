@@ -1,6 +1,8 @@
+"""Render giao diện và ánh xạ input chuột cho Pygame UI."""
+
 import pygame
 
-from src.engine.rules import EMPTY, PLAYER_BLUE, PLAYER_RED
+from src.engine.rules import EMPTY, PLAYER_BLUE
 
 HEIGHT = 600
 WIDTH = 800
@@ -15,14 +17,14 @@ BLUE_COLOR = (90, 188, 236)
 RED_COLOR = (235, 112, 102)
 HUD_TEXT_COLOR = (230, 230, 230)
 
-# Đặt lại các biến toàn cục để tránh lỗi khi chạy lại ván mới.
 def get_board_origin():
+    """Trả về tọa độ góc trái trên của board (đặt giữa màn hình)."""
     start_x = (WIDTH - BOARD_SIZE) // 2
     start_y = (HEIGHT - BOARD_SIZE) // 2
     return start_x, start_y
 
-# Lấy ô lưới từ vị trí chuột, nếu click ngoài lưới thì trả về None.
 def get_cell_from_mouse(mouse_pos, grid_size):
+    """Đổi vị trí pixel chuột thành ô cờ; ngoài board thì trả về (None, None)."""
     start_x, start_y = get_board_origin()
     x, y = mouse_pos
 
@@ -42,18 +44,21 @@ def get_cell_from_mouse(mouse_pos, grid_size):
     return None, None
 
 def drawScreen():
+    """Tạo cửa sổ game và đặt tiêu đề."""
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Color Wars")
     return screen
 
 
-def drawScene(screen, board, dots, current_player, blue_score, red_score, winner):
+def drawScene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None):
+    """Render một frame hoàn chỉnh"""
     screen.fill(BG_COLOR)
     drawBoard(screen, board, dots)
-    drawHud(screen, current_player, blue_score, red_score, winner)
+    drawHud(screen, current_player, blue_score, red_score, winner, game_mode)
 
 
 def drawBoard(screen, board, dots):
+    """Vẽ grid board và tất cả ô đang có quân kèm số dot."""
     start_x, start_y = get_board_origin()
     grid_size = len(board)
 
@@ -72,10 +77,12 @@ def drawBoard(screen, board, dots):
 
 
 def drawNode(screen, rect):
+    """Vẽ viền của một ô cờ."""
     pygame.draw.rect(screen, WHITE, rect, BORDER_WIDTH)
 
 
 def drawDot(screen, x, y, count, color):
+    """Vẽ mẫu dot cho 1..3; lớn hơn thì dùng bố cục fallback 4 góc."""
     cx = x + NODE_SIZE // 2
     cy = y + NODE_SIZE // 2
     radius = 10
@@ -88,7 +95,6 @@ def drawDot(screen, x, y, count, color):
     elif count == 3:
         positions = [(cx - gap, cy), (cx + gap, cy), (cx, cy - gap)]
     else:
-        # Fallback để render ổn nếu có count lớn hơn thiết kế.
         positions = [
             (cx - gap, cy - gap),
             (cx + gap, cy - gap),
@@ -100,19 +106,68 @@ def drawDot(screen, x, y, count, color):
         pygame.draw.circle(screen, color, (px, py), radius)
 
 
-def drawHud(screen, current_player, blue_score, red_score, winner):
-    font = pygame.font.SysFont("consolas", 24)
+def _render_fitted_line(text, color, preferred_size, min_size, max_width):
+    """Render text vừa chiều rộng: giảm font hoặc cắt bằng dấu ba chấm."""
+    font_size = preferred_size
+    while font_size >= min_size:
+        # Ưu tiên giữ nguyên nội dung bằng cách giảm dần cỡ chữ.
+        font = pygame.font.SysFont("consolas", font_size)
+        surface = font.render(text, True, color)
+        if surface.get_width() <= max_width:
+            return surface
+        font_size -= 1
+
+    font = pygame.font.SysFont("consolas", min_size)
+    if max_width <= 0:
+        return font.render("", True, color)
+
+    clipped = text
+    while clipped:
+        # Nếu vẫn quá rộng ở cỡ nhỏ nhất thì cắt nội dung kèm "...".
+        candidate = clipped + "..."
+        surface = font.render(candidate, True, color)
+        if surface.get_width() <= max_width:
+            return surface
+        clipped = clipped[:-1]
+
+    return font.render("", True, color)
+
+
+def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=None):
+    """Vẽ HUD: điểm ở trên, trạng thái bên trái, phím tắt bên phải."""
+    start_x, start_y = get_board_origin()
+    board_center_x = start_x + BOARD_SIZE // 2
+    side_margin = 16
+
+    # Tính chiều rộng mỗi panel để text không tràn khi đổi kích thước cửa sổ.
+    left_panel_width = max(120, start_x - side_margin * 2)
+    right_panel_width = max(120, WIDTH - (start_x + BOARD_SIZE) - side_margin * 2)
 
     score_text = f"Blue: {blue_score}   Red: {red_score}"
+    score_max_width = max(160, WIDTH - side_margin * 2)
+    score_surface = _render_fitted_line(score_text, HUD_TEXT_COLOR, preferred_size=30, min_size=16, max_width=score_max_width)
+    score_x = max(side_margin, board_center_x - score_surface.get_width() // 2)
+    score_y = max(8, start_y - score_surface.get_height() - 10)
+
+    mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
     if winner is None:
         turn_name = "Blue" if current_player == PLAYER_BLUE else "Red"
-        status_text = f"Turn: {turn_name}"
+        status_lines = [f"Mode: {mode_name}", f"Turn: {turn_name}"]
     else:
         winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
-        status_text = f"Winner: {winner_name}"
+        status_lines = [f"Mode: {mode_name}", f"Winner: {winner_name}"]
 
-    score_surface = font.render(score_text, True, HUD_TEXT_COLOR)
-    status_surface = font.render(status_text, True, HUD_TEXT_COLOR)
+    left_x = side_margin
+    left_y = start_y + 12
+    for idx, line in enumerate(status_lines):
+        line_surface = _render_fitted_line(line, HUD_TEXT_COLOR, preferred_size=22, min_size=14, max_width=left_panel_width)
+        screen.blit(line_surface, (left_x, left_y + idx * 28))
 
-    screen.blit(score_surface, (20, 16))
-    screen.blit(status_surface, (20, 46))
+    control_lines = ["M: Switch mode", "R: Restart"]
+    right_x = start_x + BOARD_SIZE + side_margin
+    right_y = start_y + 12
+    for idx, line in enumerate(control_lines):
+        line_surface = _render_fitted_line(line, HUD_TEXT_COLOR, preferred_size=22, min_size=14, max_width=right_panel_width)
+        screen.blit(line_surface, (right_x, right_y + idx * 28))
+
+    screen.blit(score_surface, (score_x, score_y))
