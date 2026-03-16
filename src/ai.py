@@ -1,10 +1,11 @@
-import copy
 import random
 from collections import deque
 
 EMPTY = 0
 PLAYER_BLUE = 1
 PLAYER_RED = 2
+CAPACITY = 4
+DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
 
 # kiểm tra ô trong board
@@ -14,7 +15,7 @@ def in_bounds(r, c, size):
 
 # tính capacity của ô
 def get_capacity(r, c, size):
-    return 4
+    return CAPACITY
 
 
 # BFS xử lý chain reaction
@@ -23,8 +24,6 @@ def resolve_explosions(board, dots, start_r, start_c):
     size = len(board)
 
     queue = deque([(start_r, start_c)])
-
-    directions = [(-1,0),(1,0),(0,-1),(0,1)]
 
     while queue:
 
@@ -41,7 +40,7 @@ def resolve_explosions(board, dots, start_r, start_c):
         dots[r][c] = 0
         board[r][c] = EMPTY
 
-        for dr, dc in directions:
+        for dr, dc in DIRECTIONS:
 
             nr = r + dr
             nc = c + dc
@@ -100,9 +99,6 @@ def valid_moves(board, player):
 
 # AI chọn nước đi
 def get_ai_move(board, dots):
-
-    import random
-
     size = len(board)
 
     # ===== KIỂM TRA NƯỚC ĐẦU =====
@@ -114,11 +110,7 @@ def get_ai_move(board, dots):
                 empty_cells.append((r, c))
 
     # Nếu AI chưa có ô nào → random ô trống
-    ai_has_cell = False
-    for r in range(size):
-        for c in range(size):
-            if board[r][c] == PLAYER_RED:
-                ai_has_cell = True
+    ai_has_cell = any(board[r][c] == PLAYER_RED for r in range(size) for c in range(size))
 
     if not ai_has_cell:
         return random.choice(empty_cells)
@@ -132,8 +124,8 @@ def get_ai_move(board, dots):
 
     for r, c in moves:
 
-        board_copy = copy.deepcopy(board)
-        dots_copy = copy.deepcopy(dots)
+        board_copy = [row[:] for row in board]
+        dots_copy = [row[:] for row in dots]
 
         board_copy[r][c] = PLAYER_RED
         dots_copy[r][c] += 1

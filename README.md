@@ -1,13 +1,14 @@
 # Color Wars
 
-Game chien thuat theo luot 2 nguoi choi (Blue vs Red) viet bang Pygame.
+Game chien thuat theo luot viet bang Pygame (nguoi choi Blue vs AI Red).
 
 ## Tinh nang hien tai
 
 - Ban co 5x5, can giua man hinh.
-- Moi luot, nguoi choi dat dot vao:
-  - O trong, hoac
-  - O do chinh minh dang chiem.
+- Nguoi choi dieu khien Blue bang chuot, AI dieu khien Red.
+- Moi ben dat dot theo luat:
+  - Neu chua so huu o nao: chi duoc dat vao o trong.
+  - Neu da so huu o: chi duoc dat vao o do chinh minh dang chiem.
 - Co che no day chuyen va dong hoa o lan can.
 - HUD hien thi:
   - So o Blue dang chiem
@@ -16,10 +17,7 @@ Game chien thuat theo luot 2 nguoi choi (Blue vs Red) viet bang Pygame.
 
 ## Luat no va dong hoa
 
-- Moi o co suc chua tuy vi tri:
-  - Goc: 2
-  - Canh: 3
-  - Giua: 4
+- Hien tai moi o deu co suc chua = 4 (co dinh).
 - Khi dot trong o dat nguong suc chua:
   - O do no, bi xoa toan bo dot va tro ve trong.
   - Dot duoc phan tan ra 4 huong (tren, duoi, trai, phai).
@@ -29,14 +27,25 @@ Game chien thuat theo luot 2 nguoi choi (Blue vs Red) viet bang Pygame.
 ## Dieu kien thang thua
 
 - Sau giai doan mo dau, mot ben thang khi ben con lai bi an sach.
-- Cu the theo yeu cau du an:
-  - Neu Red da tung co o tren san ma hien tai Red = 0 o, Blue thang.
-  - Nguoc lai tuong tu cho Blue.
+- Logic controller hien tai:
+  - Chi bat dau kiem tra thang/thua sau toi thieu 2 luot (`MIN_TURNS_FOR_WIN_CHECK = 2`).
+  - Neu Red da tung co o tren ban va hien tai Red = 0 o thi Blue thang.
+  - Neu Blue da tung co o tren ban va hien tai Blue = 0 o thi Red thang.
+
+## AI hien tai
+
+- AI choi ben Red trong ham `ai.get_ai_move(board, dots)`.
+- Luot dau cua AI: chon ngau nhien 1 o trong.
+- Cac luot sau:
+  - Liet ke cac nuoc hop le theo luat (chi tren o Red dang so huu).
+  - Mo phong tung nuoc (copy board/dots + xu ly no day chuyen BFS).
+  - Cham diem trang thai theo so o chiem dong (`Red - Blue`) va chon nuoc diem cao nhat.
 
 ## Cau truc ma nguon
 
 - `src/main.py`: diem vao ung dung (init/quit pygame).
-- `src/controller.py`: game state va logic (input, no day chuyen, tinh diem, xac dinh winner).
+- `src/controller.py`: game state va logic luot choi, xu ly input Blue, luot AI Red, no day chuyen, tinh diem, xac dinh winner.
+- `src/ai.py`: logic chon nuoc cho Red (mo phong va danh gia board).
 - `src/view.py`: phan UI/render (ve board, dot, HUD, map vi tri chuot -> o).
 
 ## Chay du an

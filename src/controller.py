@@ -103,12 +103,11 @@ def try_place_dot(mouse_pos):
         return
 
     # kiểm tra player đã có ô nào chưa
-    has_cell = False
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
-            if BOARD[r][c] == current_player:
-                has_cell = True
-                break
+    has_cell = any(
+        BOARD[r][c] == current_player
+        for r in range(GRID_SIZE)
+        for c in range(GRID_SIZE)
+    )
 
     # nếu chưa có ô -> lượt đầu -> chỉ được chọn ô trống
     if not has_cell:
