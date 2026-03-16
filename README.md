@@ -62,13 +62,13 @@ co the chuyen sang `pvp` ngay trong UI bang phim tat.
 ## Chay du an
 
 1. Cai Python 3.10+.
-1. Cai dependency:
+2. Cai dependency:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-1. Chay game:
+3. Chay game:
 
 ```bash
 python -m src.main
