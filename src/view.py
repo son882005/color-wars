@@ -1,5 +1,7 @@
 import pygame
 
+from src.engine.rules import EMPTY, PLAYER_BLUE, PLAYER_RED
+
 HEIGHT = 600
 WIDTH = 800
 
@@ -12,10 +14,6 @@ WHITE = (255, 255, 255)
 BLUE_COLOR = (90, 188, 236)
 RED_COLOR = (235, 112, 102)
 HUD_TEXT_COLOR = (230, 230, 230)
-
-EMPTY = 0
-PLAYER_BLUE = 1
-PLAYER_RED = 2
 
 # Đặt lại các biến toàn cục để tránh lỗi khi chạy lại ván mới.
 def get_board_origin():
