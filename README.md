@@ -1,85 +1,76 @@
 # Color Wars
 
-Game chien thuat theo luot viet bang Pygame.
-Game khoi dong o mode mac dinh `pvbot` (Blue vs AI Red),
-co the chuyen sang `pvp` ngay trong UI bang phim tat.
+Game chiến thuật theo lượt viết bằng Pygame.
+Game khởi động ở chế độ mặc định `pvbot` (đấu với AI)
 
-## Tinh nang hien tai
+## Tính năng hiện tại
 
-- Ban co 5x5, can giua man hinh.
-- Nguoi choi dieu khien Blue bang chuot, AI dieu khien Red.
-- Luot khoi dau cua moi ben:
-  - Chi duoc dat vao o trong.
-  - O khoi dau nhan 3 cham.
-- Sau khi da co o khoi dau:
-  - Chi duoc dat vao o da co diem cua chinh minh.
-  - Khong duoc dat vao o trong nua.
-- Co che no day chuyen va dong hoa o lan can.
-- HUD hien thi:
-  - Diem Blue/Red o phia tren board
-  - Mode + luot hien tai/nguoi thang o ben trai board
-  - Huong dan phim tat o ben phai board
-  - Tu dong co gian co chu HUD de tranh tran khi doi kich thuoc cua so
+- Bàn cờ 5x5.
+- Người chơi điều khiển bằng chuột, AI điều khiển Red.
+- Lượt khởi đầu của mỗi bên:
+  - Là lượt duy nhất được đặt vào ô trống.
+  - Ô khởi đầu nhận 3 chấm.
+- Sau khi đã có ô khởi đầu:
+  - Chỉ được đặt vào ô đã có điểm của chính mình.
+  - Không được đặt vào ô trống nữa.
+- Có cơ chế nổ dây chuyền và đồng hóa ô lân cận.
+- HUD hiển thị:
+  - Điểm Blue/Red ở phía trên bàn cờ
+  - Chế độ + lượt hiện tại/người thắng ở bên trái bàn cờ
+  - Hướng dẫn phím tắt ở bên phải bàn cờ
 
-## Luat no va dong hoa
+## Luật nổ và đồng hóa
 
-- Khi mot o dat du 4 cham:
-  - O do no, bi xoa toan bo dot va tro ve trong.
-  - Dot duoc phan tan ra 4 huong (tren, duoi, trai, phai).
-  - O bi trung se bi dong hoa ve mau cua ben gay no va cong them 1 dot.
-  - Neu o lan can dat moc 4 cham, tiep tuc no day chuyen.
+- Khi một ô đạt đủ 4 chấm:
+  - Ô đó nổ, Dot được phân tán ra 4 hướng (trên, dưới, trái, phải).
+  - Ô bị trúng sẽ bị đồng hóa về màu của bên gây nổ và cộng thêm 1 dot.
+  - Nếu ô lân cận đạt mốc 4 chấm, tiếp tục nổ dây chuyền.
 
-## Dieu kien thang thua
+## Điều kiện thắng thua
 
-- Muc tieu toi thuong: chiem 100% ban co bang mau cua minh va xoa so hoan toan mau doi thu.
-- Trong code, nguoi thang la ben so huu toan bo `GRID_SIZE * GRID_SIZE` o.
+- Mục tiêu: chiếm 100% bàn cờ bằng màu của mình và xóa sạch hoàn toàn màu đối thủ.
 
-## AI hien tai
+## AI hiện tại
 
-- AI choi ben Red trong ham `ai.ai.get_ai_move(board, dots)`.
-- Moi luot AI:
-  - Lay nuoc hop le tu cung bo rule voi controller (khoi dau o trong, sau do chi danh o cua minh).
-  - Mo phong tung nuoc (copy board/dots + xu ly no day chuyen BFS).
-  - Cham diem trang thai theo so o chiem dong (`Red - Blue`) va chon nuoc diem cao nhat.
+- Thuật toán AI: `ai\ai.get_ai_move(board, dots)`.
+- Mỗi lượt AI:
+  - Lấy nước hợp lệ từ cùng bộ rule với controller.
+  - Mô phỏng từng nước.
+  - Chấm điểm trạng thái theo số ô chiếm đóng (`Red - Blue`) và chọn nước điểm cao nhất.
 
-## Kien truc rule dung chung
+## Kiến trúc rule dùng chung
 
-- Rule game duoc dat tai `src/engine/rules.py`.
-- Xu ly no day chuyen duoc dat tai `src/engine/explosion.py`.
-- `controller` va `AI` cung goi chung engine de tranh lech logic.
+- Rule game được đặt tại `src/engine/rules.py`.
+- Xử lý nổ dây chuyền được đặt tại `src/engine/explosion.py`.
+- `controller` và `AI` cùng gọi chung engine.
 
-## Cau truc ma nguon
+## Cấu trúc mã nguồn
 
-- `src/main.py`: diem vao ung dung (init/quit pygame).
+- `src/main.py`: điểm vào ứng dụng (init/quit pygame).
 - `src/game/state.py`: `GameState` (board, dots, current_player, winner, turn_count).
-- `src/game/loop.py`: game loop (xu ly event, mode pvp/pvbot, ve scene moi frame).
-- `src/controller.py`: logic xu ly nuoc di tren `GameState` (apply move, tinh diem, xac dinh winner).
-- `src/engine/rules.py`: dinh nghia rule (capacity, valid moves, constants).
-- `src/engine/explosion.py`: giai no day chuyen theo BFS.
-- `src/ai/ai.py`: logic chon nuoc cho Red (mo phong va danh gia board).
-- `src/view.py`: phan UI/render (ve board, dot, HUD, map vi tri chuot -> o).
+- `src/game/loop.py`: game loop (xử lý event, mode pvp/pvbot, vẽ scene mỗi frame).
+- `src/controller.py`: logic xử lý nước đi trên `GameState` (apply move, tính điểm, xác định winner).
+- `src/engine/rules.py`: định nghĩa rule (capacity, valid moves, constants).
+- `src/engine/explosion.py`: giải nổ dây chuyền theo BFS.
+- `src/ai/ai.py`: logic chọn nước cho Red (mô phỏng và đánh giá board).
+- `src/view.py`: phần UI/render (vẽ board, dot, HUD, map vị trí chuột -> ô).
 
-## Chay du an
+## Chạy dự án
 
-1. Cai Python 3.10+.
-2. Cai dependency:
+1. Cài Python 3.10+.
+2. Cài dependency:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Chay game:
+3. Chạy game:
 
 ```bash
 python -m src.main
 ```
 
-## Phim tat trong game
+## Phím tắt trong game
 
-- `M`: Chuyen nhanh giua `pvp` va `pvbot` (dong thoi reset van moi).
-- `R`: Restart van hien tai (giu nguyen mode).
-
-## Ghi chu ky thuat
-
-- Man hinh duoc `fill` moi frame de tranh bong hinh (render ghosting).
-- Logic va UI duoc tach ro de mo rong scene, them menu, restart, AI.
+- `M`: Chuyển nhanh giữa `pvp` và `pvbot` (đồng thời reset ván mới).
+- `R`: Khởi động lại ván hiện tại (giữ nguyên mode).
