@@ -12,6 +12,7 @@ class GameState:
     board: list[list[int]] = field(init=False)
     dots: list[list[int]] = field(init=False)
     current_player: int = PLAYER_BLUE
+    #difficulty: str = "medium"  # "easy", "medium", "hard"
     turn_count: int = 0
     winner: int | None = None
     blue_has_initialized: bool = False

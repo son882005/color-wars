@@ -42,6 +42,16 @@ def run_game(game_mode=MODE_PVBOT):
                 if game_mode == MODE_PVP or state.current_player == PLAYER_BLUE:
                     row, col = view.get_cell_from_mouse(event.pos, state.grid_size)
                     apply_move(state, row, col)
+            """ if game_mode == MODE_PVBOT:
+                    move = get_ai_move(board, dots, difficulty)
+                    apply_move(move) #move = (state, row, col)
+                if key == pygame.K_1:
+                    difficulty = "easy"
+                elif key == pygame.K_2:
+                    difficulty = "medium"
+                elif key == pygame.K_3:
+                    difficulty = "hard"
+            """
 
         # 2) Lượt AI chỉ chạy trong pvbot, khi chưa có winner và tới lượt Red.
         if game_mode == MODE_PVBOT and state.winner is None and state.current_player == PLAYER_RED:

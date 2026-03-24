@@ -53,12 +53,3 @@ def get_ai_move(board, dots):
             best_move = (row, col)
 
     return best_move
-
-"""get_ai_move(board, dots, difficulty):
-    if difficulty == "easy":
-        return ez_move()
-    elif difficulty == "medium":
-        return med_move()
-    else:
-        return hard_move()
-"""

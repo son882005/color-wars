@@ -157,6 +157,8 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         winner_name = "Blue" if winner == PLAYER_BLUE else "Red"
         status_lines = [f"Mode: {mode_name}", f"Winner: {winner_name}"]
 
+    #mode game
+    
     left_x = side_margin
     left_y = start_y + 12
     for idx, line in enumerate(status_lines):
