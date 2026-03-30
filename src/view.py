@@ -8,11 +8,15 @@ DEFAULT_HEIGHT = 600
 DEFAULT_WIDTH = 800
 BORDER_WIDTH = 1
 
-BG_COLOR = (0, 0, 0)
-WHITE = (255, 255, 255)
-BLUE_COLOR = (90, 188, 236)
-RED_COLOR = (235, 112, 102)
-HUD_TEXT_COLOR = (230, 230, 230)
+BG_COLOR = (210, 137, 106)
+WHITE = (245, 236, 220)
+BLUE_COLOR = (34, 187, 226)
+RED_COLOR = (255, 92, 88)
+HUD_TEXT_COLOR = (246, 239, 230)
+CELL_EMPTY_COLOR = (228, 214, 189)
+CELL_RED_TINT = (244, 199, 205)
+CELL_BLUE_TINT = (201, 236, 243)
+CELL_BORDER_COLOR = (196, 155, 132)
 
 def compute_layout(screen, grid_size):
     """Tính layout động theo kích thước màn hình hiện tại."""
@@ -96,8 +100,21 @@ def drawBoard(screen, board, dots, layout):
         for col in range(grid_size):
             x = int(start_x + col * cell_size)
             y = int(start_y + row * cell_size)
-            rect = (x, y, int(cell_size), int(cell_size))
-            drawNode(screen, rect)
+            pad = max(2, int(cell_size * 0.06))
+            rect = pygame.Rect(
+                x + pad,
+                y + pad,
+                max(6, int(cell_size) - pad * 2),
+                max(6, int(cell_size) - pad * 2),
+            )
+            owner = board[row][col]
+            if owner == PLAYER_BLUE:
+                fill_color = CELL_BLUE_TINT
+            elif owner == EMPTY:
+                fill_color = CELL_EMPTY_COLOR
+            else:
+                fill_color = CELL_RED_TINT
+            drawNode(screen, rect, fill_color)
 
             if board[row][col] == EMPTY or dots[row][col] <= 0:
                 continue
@@ -106,9 +123,11 @@ def drawBoard(screen, board, dots, layout):
             drawDot(screen, x, y, dots[row][col], color, cell_size)
 
 
-def drawNode(screen, rect):
-    """Vẽ viền của một ô cờ."""
-    pygame.draw.rect(screen, WHITE, rect, BORDER_WIDTH)
+def drawNode(screen, rect, fill_color):
+    """Draw one board cell."""
+    radius = max(6, int(min(rect.width, rect.height) * 0.16))
+    pygame.draw.rect(screen, fill_color, rect, border_radius=radius)
+    pygame.draw.rect(screen, CELL_BORDER_COLOR, rect, BORDER_WIDTH, border_radius=radius)
 
 
 def drawDot(screen, x, y, count, color, cell_size):
@@ -265,3 +284,4 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         screen.blit(line_surface, (right_x, right_y + idx * 28))
 
     screen.blit(score_surface, (score_x, score_y))
+
