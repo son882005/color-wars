@@ -21,7 +21,8 @@ def run_game(game_mode=MODE_PVBOT):
     state = GameState()
     difficulty = "easy"
 
-    screen = view.drawScreen()
+    is_fullscreen = False
+    screen = view.drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
 
     running = True
@@ -30,6 +31,8 @@ def run_game(game_mode=MODE_PVBOT):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.VIDEORESIZE and not is_fullscreen:
+                screen = view.drawScreen(fullscreen=False, size=event.size)
             elif event.type == pygame.KEYDOWN:
                 # R: khởi tạo lại state để restart nhanh.
                 if event.key == pygame.K_r:
@@ -44,10 +47,12 @@ def run_game(game_mode=MODE_PVBOT):
                     difficulty = "medium"
                 elif event.key == pygame.K_3:
                     difficulty = "hard"
+                elif event.key == pygame.K_F11:
+                    screen, is_fullscreen = view.toggle_fullscreen(is_fullscreen, screen)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 # Ở pvbot chỉ cho người chơi Blue click; pvp thì cả hai người.
                 if game_mode == MODE_PVP or state.current_player == PLAYER_BLUE:
-                    row, col = view.get_cell_from_mouse(event.pos, state.grid_size)
+                    row, col = view.get_cell_from_mouse(event.pos, state.grid_size, screen)
                     apply_move(state, row, col)
 
         # Lượt AI chỉ chạy trong pvbot, khi chưa có winner và tới lượt Red.
