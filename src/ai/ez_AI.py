@@ -20,7 +20,7 @@ def evaluate(board):
     return score
 
 
-def get_ai_move(board, dots):
+def get_ez_move(board, dots):
     """Chọn nước hợp lệ tốt nhất bằng cách mô phỏng từng ứng viên."""
     moves = get_valid_moves(board, PLAYER_RED)
     if not moves:
