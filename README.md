@@ -1,76 +1,91 @@
 # Color Wars
 
-Game chiến thuật theo lượt viết bằng Pygame.
-Game khởi động ở chế độ mặc định `pvbot` (đấu với AI)
+Color Wars is a turn-based strategy game built with Python and Pygame.
+Players place and upgrade cells, trigger chain explosions, and convert adjacent enemy cells to control the board.
 
-## Tính năng hiện tại
+The project supports both local PvP and PvE (vs AI) with multiple bot difficulties.
 
-- Bàn cờ 5x5.
-- Người chơi điều khiển bằng chuột, AI điều khiển Red.
-- Lượt khởi đầu của mỗi bên:
-  - Là lượt duy nhất được đặt vào ô trống.
-  - Ô khởi đầu nhận 3 chấm.
-- Sau khi đã có ô khởi đầu:
-  - Chỉ được đặt vào ô đã có điểm của chính mình.
-  - Không được đặt vào ô trống nữa.
-- Có cơ chế nổ dây chuyền và đồng hóa ô lân cận.
-- HUD hiển thị:
-  - Điểm Blue/Red ở phía trên bàn cờ
-  - Chế độ + lượt hiện tại/người thắng ở bên trái bàn cờ
-  - Hướng dẫn phím tắt ở bên phải bàn cờ
+## Highlights
 
-## Luật nổ và đồng hóa
+- Turn-based tactical gameplay on a 5x5 board.
+- Chain-reaction explosion system.
+- Territory conversion mechanics after each explosion.
+- Two game modes:
+  - `PVP`: human vs human (same device).
+  - `PVBOT`: human (Blue) vs AI (Red).
+- Three AI levels:
+  - `Easy`: simple one-step evaluation.
+  - `Medium`: weighted heuristic + probabilistic top-move selection.
+  - `Hard`: iterative deepening + alpha-beta search.
+- Responsive board rendering and fullscreen toggle.
+- Explosion animation overlay for better move readability.
 
-- Khi một ô đạt đủ 4 chấm:
-  - Ô đó nổ, Dot được phân tán ra 4 hướng (trên, dưới, trái, phải).
-  - Ô bị trúng sẽ bị đồng hóa về màu của bên gây nổ và cộng thêm 1 dot.
-  - Nếu ô lân cận đạt mốc 4 chấm, tiếp tục nổ dây chuyền.
+## Core Rules
 
-## Điều kiện thắng thua
+- A move is valid only on:
+  - an empty cell if the player has no owned cells yet (first entry move), or
+  - one of the player's own cells afterward.
+- Dot increment:
+  - empty cell capture: `+3`
+  - reinforce owned cell: `+1`
+- Explosion threshold: `4`
+  - when a cell reaches threshold, it explodes,
+  - spreads dots to 4 orthogonal neighbors,
+  - converts neighbors to the exploding player's color,
+  - can trigger chain reactions.
 
-- Mục tiêu: chiếm 100% bàn cờ bằng màu của mình và xóa sạch hoàn toàn màu đối thủ.
+## Win Condition
 
-## AI hiện tại
+A player wins when they fully dominate the board, or when the opponent has been eliminated after previously entering the game.
 
-- Thuật toán AI: `ai\ai.get_ai_move(board, dots)`.
-- Mỗi lượt AI:
-  - Lấy nước hợp lệ từ cùng bộ rule với controller.
-  - Mô phỏng từng nước.
-  - Chấm điểm trạng thái theo số ô chiếm đóng (`Red - Blue`) và chọn nước điểm cao nhất.
+## Project Structure
 
-## Kiến trúc rule dùng chung
+- `src/main.py`: application entry point.
+- `src/game/state.py`: mutable runtime game state.
+- `src/game/loop.py`: event loop, turn flow, AI turn handling, render loop.
+- `src/controller.py`: move application, score calculation, winner update.
+- `src/engine/rules.py`: shared game rules/constants.
+- `src/engine/explosion.py`: BFS-based chain explosion resolver.
+- `src/ai/ai.py`: AI difficulty dispatcher.
+- `src/ai/ez_AI.py`: easy bot.
+- `src/ai/med_AI.py`: medium bot.
+- `src/ai/hard_AI.py`: hard bot.
+- `src/view.py`: rendering, HUD, board layout, click mapping, FX overlay.
+- `tests/`: unit tests for rules, explosion logic, and AI routing/validity.
 
-- Rule game được đặt tại `src/engine/rules.py`.
-- Xử lý nổ dây chuyền được đặt tại `src/engine/explosion.py`.
-- `controller` và `AI` cùng gọi chung engine.
+## Requirements
 
-## Cấu trúc mã nguồn
+- Python 3.10+
+- See `requirements.txt` for runtime dependency installation.
 
-- `src/main.py`: điểm vào ứng dụng (init/quit pygame).
-- `src/game/state.py`: `GameState` (board, dots, current_player, winner, turn_count).
-- `src/game/loop.py`: game loop (xử lý event, mode pvp/pvbot, vẽ scene mỗi frame).
-- `src/controller.py`: logic xử lý nước đi trên `GameState` (apply move, tính điểm, xác định winner).
-- `src/engine/rules.py`: định nghĩa rule (capacity, valid moves, constants).
-- `src/engine/explosion.py`: giải nổ dây chuyền theo BFS.
-- `src/ai/ai.py`: logic chọn nước cho Red (mô phỏng và đánh giá board).
-- `src/view.py`: phần UI/render (vẽ board, dot, HUD, map vị trí chuột -> ô).
-
-## Chạy dự án
-
-1. Cài Python 3.10+.
-2. Cài dependency:
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Chạy game:
+## Run Game
 
 ```bash
 python -m src.main
 ```
 
-## Phím tắt trong game
+## Controls
 
-- `M`: Chuyển nhanh giữa `pvp` và `pvbot` (đồng thời reset ván mới).
-- `R`: Khởi động lại ván hiện tại (giữ nguyên mode).
+- Left Click: place/reinforce on a valid cell.
+- `M`: toggle `PVP` / `PVBOT`.
+- `R`: restart current match.
+- `1` / `2` / `3`: set AI difficulty (`Easy` / `Medium` / `Hard`).
+- `F11`: toggle fullscreen.
+
+## Testing (Optional)
+
+```bash
+# On Windows PowerShell
+$env:PYTHONPATH='.'; pytest -q
+```
+
+## Notes
+
+- The runtime dependency is intentionally minimal for straightforward setup and play.
+- AI and game rules share the same engine logic to keep behavior consistent.
