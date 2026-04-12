@@ -59,14 +59,14 @@ def _draw_settings_glyph(surface, center, radius, color):
 
 def _draw_restart_glyph(surface, center, radius, color):
     cx, cy = center
-    arc_rect = pygame.Rect(0, 0, int(radius * 1.45), int(radius * 1.45))
+    arc_rect = pygame.Rect(0, 0, int(radius * 1.5), int(radius * 1.5))
     arc_rect.center = center
-    pygame.draw.arc(surface, color, arc_rect, 0.45, 5.45, 3)
+    pygame.draw.arc(surface, color, arc_rect, 0.8, 5.75, 4)
 
     head = [
-        (cx + int(radius * 0.55), cy - int(radius * 0.48)),
-        (cx + int(radius * 0.2), cy - int(radius * 0.45)),
-        (cx + int(radius * 0.44), cy - int(radius * 0.12)),
+        (cx + int(radius * 0.56), cy - int(radius * 0.56)),
+        (cx + int(radius * 0.2), cy - int(radius * 0.5)),
+        (cx + int(radius * 0.45), cy - int(radius * 0.18)),
     ]
     pygame.draw.polygon(surface, color, head)
 

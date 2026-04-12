@@ -20,17 +20,17 @@ SETTINGS = "settings"
 MODE_PVP = "pvp"
 MODE_PVBOT = "pvbot"
 
-HOME_BG_FALLBACK = (232, 242, 248)
-TITLE_COLOR = (31, 69, 102)
-SUBTITLE_COLOR = (63, 88, 105)
-PANEL_COLOR = (248, 251, 253)
-PANEL_BORDER = (166, 197, 218)
-TEXT_MAIN = (31, 44, 54)
-BTN_GREEN = (75, 165, 98)
-BTN_AMBER = (233, 166, 73)
-BTN_RED = (214, 91, 91)
-BTN_BLUE = (72, 137, 196)
-BTN_SLATE = (89, 114, 135)
+HOME_BG_FALLBACK = (26, 22, 24)
+TITLE_COLOR = (247, 239, 224)
+SUBTITLE_COLOR = (237, 228, 208)
+PANEL_COLOR = (255, 248, 235)
+PANEL_BORDER = (232, 215, 186)
+TEXT_MAIN = (248, 240, 223)
+BTN_GREEN = (92, 162, 126)
+BTN_AMBER = (214, 163, 85)
+BTN_RED = (194, 95, 95)
+BTN_BLUE = (112, 151, 202)
+BTN_SLATE = (126, 121, 110)
 DIFF_COLORS = {
     "easy": (72, 137, 196),
     "medium": (236, 172, 66),
@@ -55,14 +55,17 @@ def _difficulty_to_percent(difficulty):
 
 def _draw_button(screen, rect, label, color, font):
     pygame.draw.rect(screen, color, rect, border_radius=max(12, rect.height // 4))
-    text = font.render(label, True, (255, 255, 255))
+    pygame.draw.rect(screen, (255, 248, 235), rect, 2, border_radius=max(12, rect.height // 4))
+    shadow = font.render(label, True, (30, 24, 22))
+    screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 1, rect.centery + 1)))
+    text = font.render(label, True, (255, 248, 235))
     screen.blit(text, text.get_rect(center=rect.center))
 
 
 def _draw_panel(screen, rect):
     panel_surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-    pygame.draw.rect(panel_surface, (15, 31, 44, 28), panel_surface.get_rect(), border_radius=24)
-    pygame.draw.rect(panel_surface, (220, 234, 244, 80), panel_surface.get_rect(), 2, border_radius=24)
+    pygame.draw.rect(panel_surface, (255, 246, 230, 24), panel_surface.get_rect(), border_radius=24)
+    pygame.draw.rect(panel_surface, (246, 224, 190, 110), panel_surface.get_rect(), 2, border_radius=24)
     screen.blit(panel_surface, rect.topleft)
 
 
@@ -89,7 +92,7 @@ def _draw_background(screen, cache):
         source = cache.get("source")
         if source is not None:
             src_w, src_h = source.get_size()
-            scale = min(size[0] / max(1, src_w), size[1] / max(1, src_h))
+            scale = max(size[0] / max(1, src_w), size[1] / max(1, src_h))
             target_w = max(1, int(src_w * scale))
             target_h = max(1, int(src_h * scale))
             fitted = pygame.transform.smoothscale(source, (target_w, target_h))
@@ -97,8 +100,8 @@ def _draw_background(screen, cache):
             composed.blit(fitted, pos)
 
         vignette = pygame.Surface(size, pygame.SRCALPHA)
-        vignette.fill((7, 20, 32, 26))
-        pygame.draw.rect(vignette, (255, 255, 255, 36), pygame.Rect(0, 0, size[0], int(size[1] * 0.42)))
+        vignette.fill((5, 4, 8, 70))
+        pygame.draw.rect(vignette, (255, 245, 224, 26), pygame.Rect(0, 0, size[0], int(size[1] * 0.28)))
         composed.blit(vignette, (0, 0))
 
         cache["image"] = composed
@@ -118,6 +121,8 @@ def run_home_menu():
         "easy": load_icon_or_placeholder(get_home_asset_path("easy_icon.png"), icon_size, DIFF_COLORS["easy"]),
         "medium": load_icon_or_placeholder(get_home_asset_path("medium_icon.png"), icon_size, DIFF_COLORS["medium"]),
         "hard": load_icon_or_placeholder(get_home_asset_path("hard_icon.png"), icon_size, DIFF_COLORS["hard"]),
+        "mode_pvp": load_icon_or_placeholder(get_home_asset_path("human.png"), (68, 68), BTN_BLUE),
+        "mode_pvbot": load_icon_or_placeholder(get_home_asset_path("bot.png"), (68, 68), BTN_GREEN),
         "back": make_icon_surface("back", (42, 42), BTN_SLATE),
         "settings": make_icon_surface("settings", (42, 42), BTN_SLATE),
         "tutorial": make_icon_surface("tutorial", (42, 42), BTN_AMBER),
@@ -170,8 +175,8 @@ def run_home_menu():
             "Shortcuts: Left Click = move, M = switch mode, R = restart match, F11 = fullscreen toggle.",
         ]
 
-        sound_checkbox = pygame.Rect(panel.centerx - 170, panel.y + int(panel.height * 0.42), 24, 24)
-        volume_slider = pygame.Rect(panel.centerx - 170, panel.y + int(panel.height * 0.56), 340, 16)
+        volume_slider = pygame.Rect(panel.centerx - 160, panel.y + int(panel.height * 0.56), 290, 16)
+        sound_checkbox = pygame.Rect(volume_slider.right + 14, volume_slider.centery - 12, 24, 24)
         volume_knob_x = int(volume_slider.x + volume_slider.width * sound_volume)
 
         palette = {

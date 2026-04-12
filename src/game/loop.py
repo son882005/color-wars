@@ -53,8 +53,8 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
     def get_settings_rects():
         width, height = screen.get_size()
         panel = pygame.Rect((width - 380) // 2, (height - 240) // 2, 380, 240)
-        checkbox = pygame.Rect(panel.x + 34, panel.y + 92, 24, 24)
-        slider = pygame.Rect(panel.x + 34, panel.y + 162, panel.width - 68, 16)
+        slider = pygame.Rect(panel.x + 34, panel.y + 162, panel.width - 112, 16)
+        checkbox = pygame.Rect(slider.right + 14, slider.centery - 12, 24, 24)
         knob_x = int(slider.x + slider.width * sound_volume)
         return {
             "panel": panel,
@@ -87,8 +87,6 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
         title = title_font.render("Gameplay Settings", True, (35, 52, 66))
         screen.blit(title, (panel.x + 30, panel.y + 28))
 
-        label = body_font.render("Enable sound", True, (35, 52, 66))
-        screen.blit(label, (checkbox.right + 12, checkbox.y - 2))
         pygame.draw.rect(screen, (238, 244, 248), checkbox, border_radius=5)
         pygame.draw.rect(screen, (86, 111, 132), checkbox, 2, border_radius=5)
         if sound_enabled:
@@ -99,7 +97,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
             ]
             pygame.draw.lines(screen, (75, 165, 98), False, points, 3)
 
-        volume_text = body_font.render(f"Volume: {int(sound_volume * 100)}%", True, (35, 52, 66))
+        volume_text = body_font.render(f"Volume {int(sound_volume * 100)}%", True, (35, 52, 66))
         screen.blit(volume_text, (slider.x, slider.y - 34))
         pygame.draw.rect(screen, (212, 223, 232), slider, border_radius=8)
         fill_rect = pygame.Rect(slider.x, slider.y, max(1, knob_x - slider.x), slider.height)

@@ -1,8 +1,26 @@
 """Window creation and display management."""
 
+from pathlib import Path
+
 import pygame
 
 from .constants import DEFAULT_HEIGHT, DEFAULT_WIDTH
+
+_ICON_SURFACE = None
+
+
+def _load_window_icon():
+    """Load window icon from assets once."""
+    global _ICON_SURFACE
+    if _ICON_SURFACE is not None:
+        return _ICON_SURFACE
+
+    icon_path = Path(__file__).resolve().parents[2] / "asset" / "game_icon.png"
+    try:
+        _ICON_SURFACE = pygame.image.load(str(icon_path)).convert_alpha()
+    except (pygame.error, FileNotFoundError, OSError):
+        _ICON_SURFACE = None
+    return _ICON_SURFACE
 
 
 def drawScreen(fullscreen=False, size=(DEFAULT_WIDTH, DEFAULT_HEIGHT)):
@@ -19,6 +37,9 @@ def drawScreen(fullscreen=False, size=(DEFAULT_WIDTH, DEFAULT_HEIGHT)):
     screen_size = (0, 0) if fullscreen else size
     screen = pygame.display.set_mode(screen_size, flags)
     pygame.display.set_caption("Color Wars")
+    icon = _load_window_icon()
+    if icon is not None:
+        pygame.display.set_icon(icon)
     return screen
 
 

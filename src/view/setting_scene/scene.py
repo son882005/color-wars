@@ -26,9 +26,6 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
     sound_enabled = controls["sound_enabled"]
     sound_volume = controls["sound_volume"]
 
-    label = fonts["body"].render("Enable sound", True, colors["text_main"])
-    screen.blit(label, (checkbox_rect.right + 12, checkbox_rect.y - 1))
-
     pygame.draw.rect(screen, (238, 244, 248), checkbox_rect, border_radius=5)
     pygame.draw.rect(screen, colors["btn_slate"], checkbox_rect, 2, border_radius=5)
     if sound_enabled:
@@ -39,7 +36,7 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
         ]
         pygame.draw.lines(screen, colors["btn_green"], False, tick_points, 3)
 
-    volume_label = fonts["body"].render(f"Volume: {int(sound_volume * 100)}%", True, colors["text_main"])
+    volume_label = fonts["body"].render(f"Volume {int(sound_volume * 100)}%", True, colors["text_main"])
     screen.blit(volume_label, (slider_rect.x, slider_rect.y - 30))
 
     pygame.draw.rect(screen, (216, 224, 230), slider_rect, border_radius=8)
