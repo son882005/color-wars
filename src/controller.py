@@ -63,6 +63,8 @@ def apply_move(state, row, col, player=None, explosion_callback=None):
     resolve_explosions(state.board, state.dots, row, col, step_callback=explosion_callback)
 
     state.turn_count += 1
+    state.last_move = (row, col)
+    state.move_history.append((active_player, row, col))
     update_winner(state)
 
     if state.winner is None:

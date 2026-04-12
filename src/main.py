@@ -25,6 +25,7 @@ def main():
         result = run_game(
             game_mode=launch_config.get("game_mode", "pvbot"),
             difficulty=launch_config.get("difficulty", "easy"),
+            audio=launch_config.get("audio", {}),
         )
         if result is None:
             break

@@ -14,13 +14,13 @@ def draw_choose_gamemode_scene(screen, panel, fonts, colors, rects, icons):
         pygame.draw.rect(screen, (255, 248, 235), rect, border_radius=16)
         pygame.draw.rect(screen, color, rect, 3, border_radius=16)
 
-        icon_rect = icon_surface.get_rect(midleft=(rect.x + 58, rect.centery))
+        icon_rect = icon_surface.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.36)))
         screen.blit(icon_surface, icon_rect)
 
         shadow = fonts["button"].render(label, True, (24, 20, 18))
-        screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 2, rect.centery + 2)))
+        screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 2, int(rect.y + rect.height * 0.72 + 2))))
         text = fonts["button"].render(label, True, color)
-        screen.blit(text, text.get_rect(center=rect.center))
+        screen.blit(text, text.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.72))))
 
     draw_mode_card(rects["pvp_btn"], icons["mode_pvp"], "PVP", colors["btn_blue"])
     draw_mode_card(rects["pvbot_btn"], icons["mode_pvbot"], "PVBOT", colors["btn_green"])

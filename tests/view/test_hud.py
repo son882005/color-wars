@@ -2,6 +2,10 @@
 
 import unittest
 
+from src.game.state import GameState
+from src.controller import apply_move
+from src.engine.rules import PLAYER_BLUE
+from src.view.gameplay_scene.hud import get_move_history_entries
 from src.view.gameplay_scene.hud import get_control_lines, get_status_lines
 
 
@@ -21,6 +25,14 @@ class TestHudView(unittest.TestCase):
         self.assertIn("Mode: PVP", lines)
         self.assertIn("Bot: MEDIUM", lines)
         self.assertIn("Winner: Blue", lines)
+
+    def test_move_history_entries_format_recent_moves(self):
+        """Recent moves are rendered with player tag and coordinate label."""
+        state = GameState()
+        apply_move(state, 0, 0, player=PLAYER_BLUE)
+        entries = get_move_history_entries(state)
+
+        self.assertEqual(entries[-1], ("B", "A1"))
 
 
 if __name__ == "__main__":

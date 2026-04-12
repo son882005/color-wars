@@ -55,8 +55,15 @@ PYTHONPATH=. pytest -v
 | **Left Click** | Place/reinforce on valid cell |
 | **M** | Toggle between PvP / PvE mode |
 | **R** | Restart current match |
-| **1 / 2 / 3** | Set AI difficulty (Easy / Medium / Hard) |
 | **F11** | Toggle fullscreen |
+
+## ⚙️ Settings
+
+The settings panel currently focuses on audio and can be expanded later for more match or display options.
+
+- **Sound enabled**: pause or resume background music.
+- **Volume**: reduce or increase the music level in real time.
+- Changes apply immediately in-game and carry over from the Home screen into the next match.
 
 ## 📁 Project Structure
 
@@ -68,7 +75,9 @@ src/
 ├── controller.py            # Game state mutations & move validation
 ├── game/
 │   ├── state.py            # GameState dataclass
-│   └── loop.py             # Main frame loop & input handling
+│   ├── loop.py             # Main frame loop & input handling
+│   ├── audio.py            # Background music engine
+│   └── analysis.py         # HUD win-rate heuristics
 ├── engine/
 │   ├── rules.py            # Move legality & dot increment logic
 │   └── explosion.py        # Chain reaction resolver
@@ -166,6 +175,9 @@ python scripts/benchmark_ai.py --games 200
 - **AI runs on main thread** (blocking during turn); optimize if needed for multiplayer  
 - **No external assets required** (pure Pygame drawing)  
 - **Snake_case** for functions, CamelCase for classes, UPPER_CASE for constants  
+- **Gameplay HUD** now shows a chess-style win-rate meter on the right and recent moves in the lower-left  
+- **Audio** uses the first MP3 under `asset/mp3/` as looping background music  
+- **Difficulty** is selected from the Home screen slider before starting a bot match  
 
 ## 📝 License & Contributing
 

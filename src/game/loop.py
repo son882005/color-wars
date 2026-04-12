@@ -7,6 +7,7 @@ from src.controller import apply_move, get_scores
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED
 from src.game.state import GameState
 from src import view
+from src.game.audio import set_music_enabled, update_music_volume
 from src.view.commons import make_icon_surface
 
 MODE_PVP = "pvp"
@@ -15,7 +16,7 @@ FPS = 60
 EXPLOSION_ANIMATION_MS = 140
 
 
-def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
+def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
     """Run one match in pvp or pvbot mode."""
     if game_mode not in (MODE_PVP, MODE_PVBOT):
         game_mode = MODE_PVBOT
@@ -26,19 +27,22 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
     if difficulty == "med":
         difficulty = "medium"
 
+    audio = audio or {}
+
     state = GameState()
 
     is_fullscreen = True
     screen = view.drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
+    sound_enabled = bool(audio.get("enabled", True))
+    sound_volume = float(audio.get("volume", 0.75))
     ui_icons = {
         "back": make_icon_surface("back", (40, 40), bg_color=(89, 114, 135)),
         "settings": make_icon_surface("settings", (40, 40), bg_color=(89, 114, 135)),
         "restart": make_icon_surface("restart", (72, 72), bg_color=(89, 114, 135)),
     }
     settings_open = False
-    sound_enabled = True
-    sound_volume = 0.75
+    set_music_enabled(sound_enabled, sound_volume)
     settings_dragging = False
 
     running = True
@@ -130,6 +134,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
                 blue_score, red_score = get_scores(state)
                 view.drawScene(
                     screen,
+                    state,
                     state.board,
                     state.dots,
                     state.current_player,
@@ -190,9 +195,11 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
                     knob_x = rects["knob_x"]
                     if checkbox.collidepoint(mouse):
                         sound_enabled = not sound_enabled
+                        set_music_enabled(sound_enabled, sound_volume)
                     elif slider.collidepoint(mouse):
                         settings_dragging = True
                         sound_volume = (mouse[0] - slider.x) / max(1, slider.width)
+                        update_music_volume(sound_volume)
                     elif abs(mouse[0] - knob_x) <= 18 and abs(mouse[1] - slider.centery) <= 18:
                         settings_dragging = True
                     continue
@@ -213,6 +220,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
             elif event.type == pygame.MOUSEMOTION and settings_dragging and settings_open:
                 slider = get_settings_rects()["slider"]
                 sound_volume = (event.pos[0] - slider.x) / max(1, slider.width)
+                update_music_volume(sound_volume)
 
         if game_mode == MODE_PVBOT and state.winner is None and state.current_player == PLAYER_RED:
             move = get_ai_move(state.board, state.dots, difficulty)
@@ -240,6 +248,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy"):
         blue_score, red_score = get_scores(state)
         view.drawScene(
             screen,
+            state,
             state.board,
             state.dots,
             state.current_player,
