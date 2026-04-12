@@ -4,10 +4,11 @@ import pygame
 
 from src.view.choose_diff_scene import draw_choose_diff_scene
 from src.view.choose_gamemode_scene import draw_choose_gamemode_scene
+from src.view.commons import make_icon_surface
 from src.view.setting_scene import draw_setting_scene, draw_settings_icon
-from src.view.tutorial_scene import draw_tutorial_icon, draw_tutorial_scene
+from src.view.tutorial_scene import draw_tutorial_scene
 
-from ..window import drawScreen
+from ..window import drawScreen, toggle_fullscreen
 from .assets import get_home_asset_path, load_icon_or_placeholder, load_image
 from .scene import draw_home_scene
 
@@ -31,7 +32,7 @@ BTN_RED = (214, 91, 91)
 BTN_BLUE = (72, 137, 196)
 BTN_SLATE = (89, 114, 135)
 DIFF_COLORS = {
-    "easy": (80, 173, 100),
+    "easy": (72, 137, 196),
     "medium": (236, 172, 66),
     "hard": (213, 94, 89),
 }
@@ -48,8 +49,8 @@ def difficulty_from_percent(percent):
 
 
 def _difficulty_to_percent(difficulty):
-    mapping = {"easy": 0.16, "medium": 0.5, "hard": 0.84}
-    return mapping.get(difficulty, 0.16)
+    mapping = {"easy": 0.0, "medium": 0.5, "hard": 1.0}
+    return mapping.get(difficulty, 0.0)
 
 
 def _draw_button(screen, rect, label, color, font):
@@ -59,8 +60,10 @@ def _draw_button(screen, rect, label, color, font):
 
 
 def _draw_panel(screen, rect):
-    pygame.draw.rect(screen, PANEL_COLOR, rect, border_radius=24)
-    pygame.draw.rect(screen, PANEL_BORDER, rect, 2, border_radius=24)
+    panel_surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+    pygame.draw.rect(panel_surface, (15, 31, 44, 28), panel_surface.get_rect(), border_radius=24)
+    pygame.draw.rect(panel_surface, (220, 234, 244, 80), panel_surface.get_rect(), 2, border_radius=24)
+    screen.blit(panel_surface, rect.topleft)
 
 
 def compute_menu_icon_rects(panel):
@@ -72,26 +75,42 @@ def compute_menu_icon_rects(panel):
 
 def _draw_background(screen, cache):
     size = screen.get_size()
-    cached_size = cache.get("size")
-    if cached_size != size:
+    if cache.get("source") is None:
         image_path = get_home_asset_path("background.png")
         try:
-            cache["image"] = load_image(image_path, size=size, alpha=False)
+            cache["source"] = load_image(image_path, alpha=False)
         except (pygame.error, FileNotFoundError, OSError):
-            fallback = pygame.Surface(size)
-            fallback.fill(HOME_BG_FALLBACK)
-            cache["image"] = fallback
+            cache["source"] = None
+
+    if cache.get("size") != size:
+        composed = pygame.Surface(size)
+        composed.fill(HOME_BG_FALLBACK)
+
+        source = cache.get("source")
+        if source is not None:
+            src_w, src_h = source.get_size()
+            scale = min(size[0] / max(1, src_w), size[1] / max(1, src_h))
+            target_w = max(1, int(src_w * scale))
+            target_h = max(1, int(src_h * scale))
+            fitted = pygame.transform.smoothscale(source, (target_w, target_h))
+            pos = ((size[0] - target_w) // 2, (size[1] - target_h) // 2)
+            composed.blit(fitted, pos)
+
+        vignette = pygame.Surface(size, pygame.SRCALPHA)
+        vignette.fill((7, 20, 32, 26))
+        pygame.draw.rect(vignette, (255, 255, 255, 36), pygame.Rect(0, 0, size[0], int(size[1] * 0.42)))
+        composed.blit(vignette, (0, 0))
+
+        cache["image"] = composed
         cache["size"] = size
 
     screen.blit(cache["image"], (0, 0))
-    overlay = pygame.Surface(size, pygame.SRCALPHA)
-    overlay.fill((255, 255, 255, 54))
-    screen.blit(overlay, (0, 0))
 
 
 def run_home_menu():
     """Run home flow and return selected configuration or None when user exits."""
-    screen = drawScreen(fullscreen=False)
+    is_fullscreen = True
+    screen = drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
 
     icon_size = (160, 160)
@@ -99,7 +118,9 @@ def run_home_menu():
         "easy": load_icon_or_placeholder(get_home_asset_path("easy_icon.png"), icon_size, DIFF_COLORS["easy"]),
         "medium": load_icon_or_placeholder(get_home_asset_path("medium_icon.png"), icon_size, DIFF_COLORS["medium"]),
         "hard": load_icon_or_placeholder(get_home_asset_path("hard_icon.png"), icon_size, DIFF_COLORS["hard"]),
-        "back": load_icon_or_placeholder(get_home_asset_path("back_icon.png"), (40, 40), BTN_SLATE),
+        "back": make_icon_surface("back", (42, 42), BTN_SLATE),
+        "settings": make_icon_surface("settings", (42, 42), BTN_SLATE),
+        "tutorial": make_icon_surface("tutorial", (42, 42), BTN_AMBER),
     }
 
     bg_cache = {}
@@ -109,6 +130,10 @@ def run_home_menu():
     difficulty = "easy"
     slider_percent = _difficulty_to_percent(difficulty)
     dragging = False
+    settings_return_state = MENU
+    sound_enabled = True
+    sound_volume = 0.75
+    settings_dragging = False
 
     while True:
         width, height = screen.get_size()
@@ -117,7 +142,7 @@ def run_home_menu():
         btn_font = pygame.font.SysFont("segoeui", max(20, int(height * 0.033)), bold=True)
         body_font = pygame.font.SysFont("segoeui", max(16, int(height * 0.026)))
 
-        panel = pygame.Rect(max(24, width // 10), max(30, height // 15), width - max(48, width // 5), height - max(60, height // 8))
+        panel = pygame.Rect(max(24, width // 12), max(26, height // 16), width - max(48, width // 6), height - max(52, height // 10))
         back_rect = pygame.Rect(panel.x + 18, panel.y + 16, 46, 46)
 
         tutorial_icon_rect, settings_icon_rect = compute_menu_icon_rects(panel)
@@ -138,17 +163,16 @@ def run_home_menu():
         play_match_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.bottom - menu_btn_h - 26, menu_btn_w, menu_btn_h)
 
         tutorial_lines = [
-            "Objective: dominate the board by triggering chain explosions.",
-            "Click a valid cell to place or reinforce your dots.",
-            "You can only play empty cells on your first move.",
-            "After that, you may only play your own cells.",
-            "When a cell reaches 4 dots, it explodes and spreads.",
-            "Controls:",
-            "- Left Click: place or reinforce",
-            "- M: switch PVP/PVBOT during match",
-            "- R: restart current match",
-            "- F11: toggle fullscreen",
+            "Game objective: dominate the board by creating chain explosions and converting nearby enemy cells.",
+            "Turn rules: first move can only target empty cells; after that, you can play only on your own cells.",
+            "Explosions: each cell bursts at 4 dots, spreads to neighbors, and can trigger long cascades.",
+            "Best strategy: build pressure on edges, force opponent into low-value moves, and save detonations for combos.",
+            "Shortcuts: Left Click = move, M = switch mode, R = restart match, F11 = fullscreen toggle.",
         ]
+
+        sound_checkbox = pygame.Rect(panel.centerx - 170, panel.y + int(panel.height * 0.42), 24, 24)
+        volume_slider = pygame.Rect(panel.centerx - 170, panel.y + int(panel.height * 0.56), 340, 16)
+        volume_knob_x = int(volume_slider.x + volume_slider.width * sound_volume)
 
         palette = {
             "title": TITLE_COLOR,
@@ -174,22 +198,30 @@ def run_home_menu():
             "play_match_btn": play_match_btn,
             "settings_icon_rect": settings_icon_rect,
             "tutorial_icon_rect": tutorial_icon_rect,
+            "sound_checkbox": sound_checkbox,
+            "volume_slider": volume_slider,
+            "volume_knob_x": volume_knob_x,
         }
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return None
 
-            if event.type == pygame.VIDEORESIZE:
+            if event.type == pygame.VIDEORESIZE and not is_fullscreen:
                 screen = drawScreen(fullscreen=False, size=event.size)
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if state == MENU:
-                    return None
-                if state in (CHOOSE_MODE, TUTORIAL):
-                    state = MENU
-                elif state == DIFFICULTY:
-                    state = CHOOSE_MODE
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    screen, is_fullscreen = toggle_fullscreen(is_fullscreen, screen)
+                elif event.key == pygame.K_ESCAPE:
+                    if state == MENU:
+                        return None
+                    if state in (CHOOSE_MODE, TUTORIAL):
+                        state = MENU
+                    elif state == DIFFICULTY:
+                        state = CHOOSE_MODE
+                    elif state == SETTINGS:
+                        state = settings_return_state
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse = event.pos
@@ -199,6 +231,7 @@ def run_home_menu():
                     elif tutorial_icon_rect.collidepoint(mouse):
                         state = TUTORIAL
                     elif settings_icon_rect.collidepoint(mouse):
+                        settings_return_state = MENU
                         state = SETTINGS
                     elif quit_btn.collidepoint(mouse):
                         return None
@@ -206,10 +239,17 @@ def run_home_menu():
                 elif state == CHOOSE_MODE:
                     if back_rect.collidepoint(mouse):
                         state = MENU
+                    elif settings_icon_rect.collidepoint(mouse):
+                        settings_return_state = CHOOSE_MODE
+                        state = SETTINGS
                     elif pvp_btn.collidepoint(mouse):
                         selected_mode = MODE_PVP
                         difficulty = "easy"
-                        return {"game_mode": selected_mode, "difficulty": difficulty}
+                        return {
+                            "game_mode": selected_mode,
+                            "difficulty": difficulty,
+                            "audio": {"enabled": sound_enabled, "volume": sound_volume},
+                        }
                     elif pvbot_btn.collidepoint(mouse):
                         selected_mode = MODE_PVBOT
                         state = DIFFICULTY
@@ -217,8 +257,15 @@ def run_home_menu():
                 elif state == DIFFICULTY:
                     if back_rect.collidepoint(mouse):
                         state = CHOOSE_MODE
+                    elif settings_icon_rect.collidepoint(mouse):
+                        settings_return_state = DIFFICULTY
+                        state = SETTINGS
                     elif play_match_btn.collidepoint(mouse):
-                        return {"game_mode": selected_mode, "difficulty": difficulty}
+                        return {
+                            "game_mode": selected_mode,
+                            "difficulty": difficulty,
+                            "audio": {"enabled": sound_enabled, "volume": sound_volume},
+                        }
                     elif slider_rect.collidepoint(mouse):
                         dragging = True
                         slider_percent = (mouse[0] - slider_rect.x) / max(1, slider_rect.width)
@@ -226,19 +273,37 @@ def run_home_menu():
                     elif abs(mouse[0] - knob_x) <= 24 and abs(mouse[1] - slider_rect.centery) <= 24:
                         dragging = True
 
-                elif state == TUTORIAL and back_rect.collidepoint(mouse):
-                    state = MENU
-                elif state == SETTINGS and back_rect.collidepoint(mouse):
-                    state = MENU
+                elif state == TUTORIAL:
+                    if back_rect.collidepoint(mouse):
+                        state = MENU
+                    elif settings_icon_rect.collidepoint(mouse):
+                        settings_return_state = TUTORIAL
+                        state = SETTINGS
+
+                elif state == SETTINGS:
+                    if back_rect.collidepoint(mouse):
+                        state = settings_return_state
+                    elif sound_checkbox.collidepoint(mouse):
+                        sound_enabled = not sound_enabled
+                    elif volume_slider.collidepoint(mouse):
+                        settings_dragging = True
+                        sound_volume = (mouse[0] - volume_slider.x) / max(1, volume_slider.width)
+                    elif abs(mouse[0] - volume_knob_x) <= 20 and abs(mouse[1] - volume_slider.centery) <= 20:
+                        settings_dragging = True
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 dragging = False
+                settings_dragging = False
 
             if event.type == pygame.MOUSEMOTION and dragging and state == DIFFICULTY:
                 slider_percent = (event.pos[0] - slider_rect.x) / max(1, slider_rect.width)
                 difficulty = difficulty_from_percent(slider_percent)
 
+            if event.type == pygame.MOUSEMOTION and settings_dragging and state == SETTINGS:
+                sound_volume = (event.pos[0] - volume_slider.x) / max(1, volume_slider.width)
+
         slider_percent = max(0.0, min(1.0, slider_percent))
+        sound_volume = max(0.0, min(1.0, sound_volume))
         if not dragging:
             slider_percent = _difficulty_to_percent(difficulty)
 
@@ -254,7 +319,7 @@ def run_home_menu():
                 shared_rects,
             )
             draw_settings_icon(screen, settings_icon_rect, palette)
-            draw_tutorial_icon(screen, tutorial_icon_rect, palette, btn_font)
+            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
 
         elif state == CHOOSE_MODE:
             draw_choose_gamemode_scene(
@@ -263,7 +328,7 @@ def run_home_menu():
                 {"main": main_font, "button": btn_font},
                 palette,
                 shared_rects,
-                icons["back"],
+                icons,
             )
 
         elif state == DIFFICULTY:
@@ -279,6 +344,7 @@ def run_home_menu():
             )
 
         elif state == TUTORIAL:
+            draw_settings_icon(screen, settings_icon_rect, palette)
             draw_tutorial_scene(
                 screen,
                 panel,
@@ -296,6 +362,13 @@ def run_home_menu():
                 palette,
                 back_rect,
                 icons["back"],
+                {
+                    "sound_checkbox": sound_checkbox,
+                    "volume_slider": volume_slider,
+                    "volume_knob_x": int(volume_slider.x + volume_slider.width * sound_volume),
+                    "sound_enabled": sound_enabled,
+                    "sound_volume": sound_volume,
+                },
             )
 
         pygame.display.flip()

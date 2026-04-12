@@ -1,9 +1,10 @@
 """Choose game mode scene renderer."""
 
 
-def draw_choose_gamemode_scene(screen, panel, fonts, colors, rects, back_icon):
+def draw_choose_gamemode_scene(screen, panel, fonts, colors, rects, icons):
     """Draw mode selection scene."""
-    screen.blit(back_icon, rects["back_rect"].topleft)
+    screen.blit(icons["back"], rects["back_rect"].topleft)
+    screen.blit(icons["settings"], rects["settings_icon_rect"].topleft)
     title = fonts["main"].render("Select game mode", True, colors["text_main"])
     screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 110)))
 

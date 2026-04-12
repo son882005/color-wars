@@ -6,6 +6,7 @@ import pygame
 def draw_choose_diff_scene(screen, panel, fonts, colors, rects, difficulty, icons):
     """Draw difficulty picker scene."""
     screen.blit(icons["back"], rects["back_rect"].topleft)
+    screen.blit(icons["settings"], rects["settings_icon_rect"].topleft)
 
     current_color = colors["diff_colors"][difficulty]
     icon = icons[difficulty]

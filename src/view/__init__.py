@@ -40,7 +40,7 @@ from .choose_gamemode_scene import draw_choose_gamemode_scene
 from .home_scene import compute_menu_icon_rects, difficulty_from_percent, draw_home_scene, run_home_menu
 from .setting_scene import draw_setting_scene, draw_settings_icon
 from .tutorial_scene import draw_tutorial_icon, draw_tutorial_scene
-from .win_scene import draw_win_scene
+from .win_scene import draw_win_scene, get_win_action_rects
 
 # ============================================================================
 # UI components and base classes

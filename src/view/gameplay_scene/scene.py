@@ -6,7 +6,6 @@ from .board import drawBoard
 from ..constants import BG_BLUE_TURN, BG_NEUTRAL, BG_RED_TURN
 from .hud import drawHud
 from ..layout import compute_layout
-from src.view.win_scene import draw_win_scene
 
 
 def draw_gameplay_scene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None):
@@ -20,7 +19,6 @@ def draw_gameplay_scene(screen, board, dots, current_player, blue_score, red_sco
     screen.fill(bg_color)
     drawBoard(screen, board, dots, layout)
     drawHud(screen, current_player, blue_score, red_score, winner, game_mode, difficulty, layout)
-    draw_win_scene(screen, layout, winner)
 
 
 def drawScene(screen, board, dots, current_player, blue_score, red_score, winner, game_mode=None, difficulty=None):

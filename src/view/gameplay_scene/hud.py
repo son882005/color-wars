@@ -90,8 +90,6 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
     side_margin = layout["side_margin"]
 
     left_panel_width = max(120, start_x - side_margin * 2)
-    right_panel_width = max(120, width - (start_x + board_size) - side_margin * 2)
-
     drawScoreBadge(screen, layout, blue_score, red_score, current_player)
 
     status_lines = get_status_lines(game_mode, difficulty, winner)
@@ -108,15 +106,4 @@ def drawHud(screen, current_player, blue_score, red_score, winner, game_mode=Non
         )
         screen.blit(line_surface, (left_x, left_y + idx * 28))
 
-    control_lines = get_control_lines()
-    right_x = start_x + board_size + side_margin
-    right_y = start_y + 12
-    for idx, line in enumerate(control_lines):
-        line_surface = _render_fitted_line(
-            line,
-            HUD_TEXT_COLOR,
-            preferred_size=max(16, int(layout["height"] * 0.032)),
-            min_size=12,
-            max_width=right_panel_width,
-        )
-        screen.blit(line_surface, (right_x, right_y + idx * 28))
+    _ = width  # keep signature stable for callers using layout info
