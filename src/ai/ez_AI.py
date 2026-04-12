@@ -1,4 +1,4 @@
-"""Easy AI for Red: choose a random valid move."""
+"""Easy AI for Red: intentionally weak and beginner-friendly."""
 
 import random
 
@@ -6,7 +6,7 @@ from src.engine.explosion import resolve_explosions
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED, get_move_dot_increment, get_valid_moves
 
 
-EZ_GREEDY_PROB = 0.10
+EZ_WEAK_PICK_PROB = 0.80
 
 
 def _simulate_move(board, dots, move):
@@ -32,15 +32,23 @@ def _material_score(board):
     return score
 
 
+def _worst_half_moves(board, dots, moves):
+    """Return lower-impact moves to keep Easy mode forgiving for new players."""
+    scored = [(move, _material_score(_simulate_move(board, dots, move))) for move in moves]
+    scored.sort(key=lambda item: item[1])
+
+    half = max(1, len(scored) // 2)
+    return [move for move, _ in scored[:half]]
+
+
 def get_ez_move(board, dots):
-    """Pick any valid move. This is intentionally weak."""
+    """Pick mostly weak moves so beginners can learn without being crushed."""
     moves = get_valid_moves(board, PLAYER_RED)
     if not moves:
         return None
 
-    if random.random() < EZ_GREEDY_PROB:
-        scored = [(move, _material_score(_simulate_move(board, dots, move))) for move in moves]
-        scored.sort(key=lambda item: item[1], reverse=True)
-        return scored[0][0]
+    if len(moves) > 1 and random.random() < EZ_WEAK_PICK_PROB:
+        weaker_moves = _worst_half_moves(board, dots, moves)
+        return random.choice(weaker_moves)
 
     return random.choice(moves)

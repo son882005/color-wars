@@ -14,7 +14,7 @@ The project supports both local PvP and PvE (vs AI) with multiple bot difficulti
   - `PVP`: human vs human (same device).
   - `PVBOT`: human (Blue) vs AI (Red).
 - Three AI levels:
-  - `Easy`: mostly random with a tiny greedy chance.
+  - `Easy`: mostly chooses weak moves (training-friendly).
   - `Medium`: shallow lookahead with controlled randomness.
   - `Hard`: adaptive alpha-beta with stronger evaluation.
 - Responsive board rendering and fullscreen toggle.
@@ -58,7 +58,7 @@ A player wins when they fully dominate the board, or when the opponent has been 
 | `src/controller.py` | Core gameplay actions at turn level. | Applies moves, updates score, checks win state, and switches turns. |
 | `src/ai/__init__.py` | AI package marker. | Exposes AI modules as a clean package. |
 | `src/ai/ai.py` | AI dispatcher/router. | Chooses which difficulty bot function (`easy/medium/hard`) is called. |
-| `src/ai/ez_AI.py` | Easy bot policy. | Plays weakly (mostly random, with tiny immediate-gain bias). |
+| `src/ai/ez_AI.py` | Easy bot policy. | Plays weakly by preferring lower-impact candidate moves. |
 | `src/ai/med_AI.py` | Medium bot logic and heuristic evaluation. | Uses short lookahead and light randomness for human-like mistakes. |
 | `src/ai/hard_AI.py` | Hard bot search + evaluation. | Uses alpha-beta search with adaptive depth and stronger board features. |
 | `src/engine/__init__.py` | Engine package marker. | Groups pure rule/explosion mechanics. |
