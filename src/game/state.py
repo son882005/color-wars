@@ -17,6 +17,8 @@ class GameState:
     winner: int | None = None
     blue_has_initialized: bool = False
     red_has_initialized: bool = False
+    last_move: tuple[int, int] | None = None
+    move_history: list[tuple[int, int, int]] = field(default_factory=list)
 
     def __post_init__(self):
         """Khởi tạo ma trận board/dots rỗng theo kích thước lưới."""
