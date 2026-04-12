@@ -14,13 +14,24 @@ def draw_choose_gamemode_scene(screen, panel, fonts, colors, rects, icons):
         pygame.draw.rect(screen, (255, 248, 235), rect, border_radius=16)
         pygame.draw.rect(screen, color, rect, 3, border_radius=16)
 
-        icon_rect = icon_surface.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.36)))
-        screen.blit(icon_surface, icon_rect)
+        icon_size = min(42, max(30, rect.height // 2))
+        icon = pygame.transform.smoothscale(icon_surface, (icon_size, icon_size))
+        icon_rect = icon.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.34)))
+        screen.blit(icon, icon_rect)
 
-        shadow = fonts["button"].render(label, True, (24, 20, 18))
-        screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 2, int(rect.y + rect.height * 0.72 + 2))))
-        text = fonts["button"].render(label, True, color)
-        screen.blit(text, text.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.72))))
+        label_font = pygame.font.SysFont("segoeui", max(18, rect.height // 4), bold=True)
+        sub_font = pygame.font.SysFont("segoeui", max(12, rect.height // 8))
+
+        shadow = label_font.render(label, True, (24, 20, 18))
+        screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 2, int(rect.y + rect.height * 0.70 + 2))))
+        text = label_font.render(label, True, color)
+        screen.blit(text, text.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.70))))
+
+        subtitle = "Human vs human" if label == "PVP" else "Human vs bot"
+        sub_shadow = sub_font.render(subtitle, True, (24, 20, 18))
+        screen.blit(sub_shadow, sub_shadow.get_rect(center=(rect.centerx + 1, int(rect.y + rect.height * 0.86 + 1))))
+        sub_text = sub_font.render(subtitle, True, (78, 68, 60))
+        screen.blit(sub_text, sub_text.get_rect(center=(rect.centerx, int(rect.y + rect.height * 0.86))))
 
     draw_mode_card(rects["pvp_btn"], icons["mode_pvp"], "PVP", colors["btn_blue"])
     draw_mode_card(rects["pvbot_btn"], icons["mode_pvbot"], "PVBOT", colors["btn_green"])

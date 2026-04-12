@@ -17,21 +17,22 @@ def main():
 
     # Khởi tạo toàn bộ subsystem của pygame trước khi render/game loop.
     pygame.init()
-    while True:
-        launch_config = run_home_menu()
-        if launch_config is None:
-            break
+    try:
+        while True:
+            launch_config = run_home_menu()
+            if launch_config is None:
+                break
 
-        result = run_game(
-            game_mode=launch_config.get("game_mode", "pvbot"),
-            difficulty=launch_config.get("difficulty", "easy"),
-            audio=launch_config.get("audio", {}),
-        )
-        if result is None:
-            break
-    # Giải phóng tài nguyên pygame trước khi thoát tiến trình.
-    pygame.quit()
-    sys.exit()
+            result = run_game(
+                game_mode=launch_config.get("game_mode", "pvbot"),
+                difficulty=launch_config.get("difficulty", "easy"),
+                audio=launch_config.get("audio", {}),
+            )
+            if result is None:
+                break
+    finally:
+        # Giải phóng tài nguyên pygame ngay cả khi có exception ở menu hoặc gameplay.
+        pygame.quit()
 
 if __name__ == "__main__":
     main()

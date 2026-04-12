@@ -7,13 +7,17 @@ from src.controller import apply_move, get_scores
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED
 from src.game.state import GameState
 from src import view
-from src.game.audio import set_music_enabled, update_music_volume
+from src.game.audio import set_music_enabled
 from src.view.commons import make_icon_surface
 
 MODE_PVP = "pvp"
 MODE_PVBOT = "pvbot"
 FPS = 60
 EXPLOSION_ANIMATION_MS = 140
+
+
+def _clamp01(value):
+    return max(0.0, min(1.0, value))
 
 
 def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
@@ -35,7 +39,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
     screen = view.drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
     sound_enabled = bool(audio.get("enabled", True))
-    sound_volume = float(audio.get("volume", 0.75))
+    sound_volume = _clamp01(float(audio.get("volume", 0.75)))
     ui_icons = {
         "back": make_icon_surface("back", (40, 40), bg_color=(89, 114, 135)),
         "settings": make_icon_surface("settings", (40, 40), bg_color=(89, 114, 135)),
@@ -44,6 +48,8 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
     settings_open = False
     set_music_enabled(sound_enabled, sound_volume)
     settings_dragging = False
+    pending_sound_enabled = sound_enabled
+    pending_sound_volume = sound_volume
 
     running = True
 
@@ -59,11 +65,13 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
         panel = pygame.Rect((width - 380) // 2, (height - 240) // 2, 380, 240)
         slider = pygame.Rect(panel.x + 34, panel.y + 162, panel.width - 112, 16)
         checkbox = pygame.Rect(slider.right + 14, slider.centery - 12, 24, 24)
-        knob_x = int(slider.x + slider.width * sound_volume)
+        apply_btn = pygame.Rect(panel.centerx - 56, panel.bottom - 56, 112, 34)
+        knob_x = int(slider.x + slider.width * pending_sound_volume)
         return {
             "panel": panel,
             "checkbox": checkbox,
             "slider": slider,
+            "apply_btn": apply_btn,
             "knob_x": knob_x,
         }
 
@@ -77,6 +85,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
         panel = rects["panel"]
         checkbox = rects["checkbox"]
         slider = rects["slider"]
+        apply_btn = rects["apply_btn"]
         knob_x = rects["knob_x"]
 
         overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -93,7 +102,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
 
         pygame.draw.rect(screen, (238, 244, 248), checkbox, border_radius=5)
         pygame.draw.rect(screen, (86, 111, 132), checkbox, 2, border_radius=5)
-        if sound_enabled:
+        if pending_sound_enabled:
             points = [
                 (checkbox.x + 5, checkbox.centery),
                 (checkbox.x + 10, checkbox.bottom - 6),
@@ -101,13 +110,18 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
             ]
             pygame.draw.lines(screen, (75, 165, 98), False, points, 3)
 
-        volume_text = body_font.render(f"Volume {int(sound_volume * 100)}%", True, (35, 52, 66))
+        volume_text = body_font.render(f"Volume {int(pending_sound_volume * 100)}%", True, (35, 52, 66))
         screen.blit(volume_text, (slider.x, slider.y - 34))
         pygame.draw.rect(screen, (212, 223, 232), slider, border_radius=8)
         fill_rect = pygame.Rect(slider.x, slider.y, max(1, knob_x - slider.x), slider.height)
         pygame.draw.rect(screen, (72, 137, 196), fill_rect, border_radius=8)
         pygame.draw.circle(screen, (255, 255, 255), (knob_x, slider.centery), 11)
         pygame.draw.circle(screen, (72, 137, 196), (knob_x, slider.centery), 8)
+
+        pygame.draw.rect(screen, (72, 137, 196), apply_btn, border_radius=10)
+        pygame.draw.rect(screen, (255, 255, 255), apply_btn, 2, border_radius=10)
+        apply_text = body_font.render("Apply", True, (255, 255, 255))
+        screen.blit(apply_text, apply_text.get_rect(center=apply_btn.center))
 
         return rects
 
@@ -185,6 +199,9 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
                 if corner_rects["back"].collidepoint(mouse):
                     return "home"
                 if corner_rects["settings"].collidepoint(mouse):
+                    if not settings_open:
+                        pending_sound_enabled = sound_enabled
+                        pending_sound_volume = sound_volume
                     settings_open = not settings_open
                     continue
 
@@ -192,14 +209,18 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
                     rects = get_settings_rects()
                     checkbox = rects["checkbox"]
                     slider = rects["slider"]
+                    apply_btn = rects["apply_btn"]
                     knob_x = rects["knob_x"]
-                    if checkbox.collidepoint(mouse):
-                        sound_enabled = not sound_enabled
+                    if apply_btn.collidepoint(mouse):
+                        sound_enabled = pending_sound_enabled
+                        sound_volume = pending_sound_volume
                         set_music_enabled(sound_enabled, sound_volume)
+                        settings_open = False
+                    elif checkbox.collidepoint(mouse):
+                        pending_sound_enabled = not pending_sound_enabled
                     elif slider.collidepoint(mouse):
                         settings_dragging = True
-                        sound_volume = (mouse[0] - slider.x) / max(1, slider.width)
-                        update_music_volume(sound_volume)
+                        pending_sound_volume = _clamp01((mouse[0] - slider.x) / max(1, slider.width))
                     elif abs(mouse[0] - knob_x) <= 18 and abs(mouse[1] - slider.centery) <= 18:
                         settings_dragging = True
                     continue
@@ -219,8 +240,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", audio=None):
                 settings_dragging = False
             elif event.type == pygame.MOUSEMOTION and settings_dragging and settings_open:
                 slider = get_settings_rects()["slider"]
-                sound_volume = (event.pos[0] - slider.x) / max(1, slider.width)
-                update_music_volume(sound_volume)
+                pending_sound_volume = _clamp01((event.pos[0] - slider.x) / max(1, slider.width))
 
         if game_mode == MODE_PVBOT and state.winner is None and state.current_player == PLAYER_RED:
             move = get_ai_move(state.board, state.dots, difficulty)

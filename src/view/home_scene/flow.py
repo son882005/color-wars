@@ -160,8 +160,10 @@ def run_home_menu():
         play_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y, menu_btn_w, menu_btn_h)
         quit_btn = pygame.Rect(center_x - menu_btn_w // 2, menu_start_y + menu_btn_h + 14, menu_btn_w, menu_btn_h)
 
-        pvp_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.y + int(panel.height * 0.45), menu_btn_w, menu_btn_h)
-        pvbot_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.y + int(panel.height * 0.45) + menu_btn_h + 16, menu_btn_w, menu_btn_h)
+        mode_btn_h = max(46, int(panel.height * 0.085))
+        mode_btn_gap = max(10, int(panel.height * 0.015))
+        pvp_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.y + int(panel.height * 0.45), menu_btn_w, mode_btn_h)
+        pvbot_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.y + int(panel.height * 0.45) + mode_btn_h + mode_btn_gap, menu_btn_w, mode_btn_h)
 
         slider_rect = pygame.Rect(center_x - min(180, panel.width // 3), panel.y + int(panel.height * 0.58), min(360, panel.width * 2 // 3), 22)
         knob_x = int(slider_rect.x + slider_rect.width * slider_percent)

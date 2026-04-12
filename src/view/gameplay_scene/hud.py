@@ -2,7 +2,7 @@
 
 import pygame
 
-from src.game.analysis import estimate_win_chances, format_cell_label
+from src.game.analysis import estimate_win_chances
 from src.engine.rules import PLAYER_BLUE
 
 from ..constants import BLUE_COLOR, HUD_TEXT_COLOR, RED_COLOR
@@ -29,7 +29,7 @@ def get_move_history_entries(state, limit=6):
     entries = []
     for player, row, col in state.move_history[-limit:]:
         player_name = "B" if player == PLAYER_BLUE else "R"
-        entries.append((player_name, format_cell_label(row, col)))
+        entries.append((player_name, f"({row + 1}, {col + 1})"))
     return entries
 
 
@@ -135,14 +135,6 @@ def draw_win_rate_panel(screen, state, layout, game_mode=None, difficulty=None):
     red_text = body_font.render(f"{red_chance}%", True, RED_COLOR)
     screen.blit(blue_text, (bar_rect.right + 12, bar_rect.y - 2))
     screen.blit(red_text, (bar_rect.right + 12, bar_rect.bottom - red_text.get_height() + 2))
-
-    mode_name = "PVP" if game_mode == "pvp" else "PVBOT"
-    difficulty_name = (difficulty or "easy").upper()
-    details = [f"Mode: {mode_name}", f"Bot: {difficulty_name}"]
-    detail_y = panel.y + 92
-    for idx, line in enumerate(details):
-        text = pygame.font.SysFont("consolas", max(12, int(height * 0.022))).render(line, True, HUD_TEXT_COLOR)
-        screen.blit(text, (panel.x + 58, detail_y + idx * 24))
 
 
 def draw_move_history_panel(screen, state, layout):
