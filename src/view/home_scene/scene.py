@@ -16,7 +16,7 @@ def draw_home_scene(screen, panel, fonts, colors, rects):
     _blit_shadow_text(
         screen,
         fonts["body"],
-        "Dễ làm quen, khó tinh thông",
+        "De choi, kho de thanh cao thu",
         colors["subtitle"],
         (center_x, panel.y + 138),
         shadow_color=(10, 14, 22),
@@ -24,5 +24,5 @@ def draw_home_scene(screen, panel, fonts, colors, rects):
     )
 
     draw_button = rects["draw_button"]
-    draw_button(screen, rects["play_btn"], "PLAY", colors["btn_green"], fonts["button"])
-    draw_button(screen, rects["quit_btn"], "QUIT", colors["btn_red"], fonts["button"])
+    draw_button(screen, rects["play_btn"], "CHOI", colors["btn_green"], fonts["button"])
+    draw_button(screen, rects["quit_btn"], "THOAT", colors["btn_red"], fonts["button"])

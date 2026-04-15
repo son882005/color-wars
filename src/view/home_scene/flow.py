@@ -2,11 +2,11 @@
 
 import pygame
 
+from src.game.settings import AppSettings, clamp01
 from src.view.choose_diff_scene import draw_choose_diff_scene
 from src.view.choose_gamemode_scene import draw_choose_gamemode_scene
-from src.view.commons import make_icon_surface
+from src.view.commons import draw_tutorial_overlay, make_icon_surface
 from src.view.setting_scene import draw_setting_scene, draw_settings_icon
-from src.view.tutorial_scene import draw_tutorial_scene
 
 from ..window import drawScreen, toggle_fullscreen
 from .assets import get_home_asset_path, load_icon_or_placeholder, load_image
@@ -110,9 +110,10 @@ def _draw_background(screen, cache):
     screen.blit(cache["image"], (0, 0))
 
 
-def run_home_menu():
+def run_home_menu(settings=None, music=None):
     """Run home flow and return selected configuration or None when user exits."""
-    is_fullscreen = True
+    settings = settings or AppSettings()
+    is_fullscreen = bool(settings.fullscreen)
     screen = drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
 
@@ -136,9 +137,11 @@ def run_home_menu():
     slider_percent = _difficulty_to_percent(difficulty)
     dragging = False
     settings_return_state = MENU
-    sound_enabled = True
-    sound_volume = 0.75
+    tutorial_open = False
     settings_dragging = False
+
+    if music is not None:
+        music.enter_menu()
 
     while True:
         width, height = screen.get_size()
@@ -170,16 +173,16 @@ def run_home_menu():
         play_match_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.bottom - menu_btn_h - 26, menu_btn_w, menu_btn_h)
 
         tutorial_lines = [
-            "Game objective: dominate the board by creating chain explosions and converting nearby enemy cells.",
-            "Turn rules: first move can only target empty cells; after that, you can play only on your own cells.",
-            "Explosions: each cell bursts at 4 dots, spreads to neighbors, and can trigger long cascades.",
-            "Best strategy: build pressure on edges, force opponent into low-value moves, and save detonations for combos.",
-            "Shortcuts: Left Click = move, M = switch mode, R = restart match, F11 = fullscreen toggle.",
+            "Muc tieu: chiem nhieu o hon doi thu bang cach kich no day chuyen.",
+            "Luot choi: o dau tran chi duoc dat vao o trong; sau do duoc tang quan tren o minh dang so huu.",
+            "No day chuyen: o dat 4 cham se no, lan sang o ke ben va co the kich hoat cac vu no tiep theo.",
+            "Meo nhanh: uu tien canh ban co, ep doi thu vao nuoc di yeu, va de danh nuoc no lon de dao chieu the tran.",
+            "Phim tat: Chuot trai dat nuoc, M doi che do, R choi lai, F11 toan man hinh, Esc quay lai.",
         ]
 
         volume_slider = pygame.Rect(panel.centerx - 160, panel.y + int(panel.height * 0.56), 290, 16)
         sound_checkbox = pygame.Rect(volume_slider.right + 14, volume_slider.centery - 12, 24, 24)
-        volume_knob_x = int(volume_slider.x + volume_slider.width * sound_volume)
+        volume_knob_x = int(volume_slider.x + volume_slider.width * settings.sound_volume)
 
         palette = {
             "title": TITLE_COLOR,
@@ -220,8 +223,13 @@ def run_home_menu():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F11:
                     screen, is_fullscreen = toggle_fullscreen(is_fullscreen, screen)
+                    settings.set_fullscreen(is_fullscreen)
+                elif event.key == pygame.K_h:
+                    tutorial_open = not tutorial_open
                 elif event.key == pygame.K_ESCAPE:
-                    if state == MENU:
+                    if tutorial_open:
+                        tutorial_open = False
+                    elif state == MENU:
                         return None
                     if state in (CHOOSE_MODE, TUTORIAL):
                         state = MENU
@@ -233,10 +241,12 @@ def run_home_menu():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse = event.pos
                 if state == MENU:
-                    if play_btn.collidepoint(mouse):
+                    if tutorial_open:
+                        pass
+                    elif play_btn.collidepoint(mouse):
                         state = CHOOSE_MODE
                     elif tutorial_icon_rect.collidepoint(mouse):
-                        state = TUTORIAL
+                        tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = MENU
                         state = SETTINGS
@@ -244,8 +254,12 @@ def run_home_menu():
                         return None
 
                 elif state == CHOOSE_MODE:
-                    if back_rect.collidepoint(mouse):
+                    if tutorial_open:
+                        pass
+                    elif back_rect.collidepoint(mouse):
                         state = MENU
+                    elif tutorial_icon_rect.collidepoint(mouse):
+                        tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = CHOOSE_MODE
                         state = SETTINGS
@@ -255,15 +269,18 @@ def run_home_menu():
                         return {
                             "game_mode": selected_mode,
                             "difficulty": difficulty,
-                            "audio": {"enabled": sound_enabled, "volume": sound_volume},
                         }
                     elif pvbot_btn.collidepoint(mouse):
                         selected_mode = MODE_PVBOT
                         state = DIFFICULTY
 
                 elif state == DIFFICULTY:
-                    if back_rect.collidepoint(mouse):
+                    if tutorial_open:
+                        pass
+                    elif back_rect.collidepoint(mouse):
                         state = CHOOSE_MODE
+                    elif tutorial_icon_rect.collidepoint(mouse):
+                        tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = DIFFICULTY
                         state = SETTINGS
@@ -271,7 +288,6 @@ def run_home_menu():
                         return {
                             "game_mode": selected_mode,
                             "difficulty": difficulty,
-                            "audio": {"enabled": sound_enabled, "volume": sound_volume},
                         }
                     elif slider_rect.collidepoint(mouse):
                         dragging = True
@@ -288,15 +304,27 @@ def run_home_menu():
                         state = SETTINGS
 
                 elif state == SETTINGS:
+                    if tutorial_open:
+                        tutorial_open = False
+                        continue
                     if back_rect.collidepoint(mouse):
                         state = settings_return_state
                     elif sound_checkbox.collidepoint(mouse):
-                        sound_enabled = not sound_enabled
+                        settings.set_sound_enabled(not settings.sound_enabled)
+                        if music is not None:
+                            music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
                     elif volume_slider.collidepoint(mouse):
                         settings_dragging = True
-                        sound_volume = (mouse[0] - volume_slider.x) / max(1, volume_slider.width)
+                        settings.set_sound_volume((mouse[0] - volume_slider.x) / max(1, volume_slider.width))
+                        if music is not None:
+                            music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
                     elif abs(mouse[0] - volume_knob_x) <= 20 and abs(mouse[1] - volume_slider.centery) <= 20:
                         settings_dragging = True
+
+                if tutorial_open:
+                    close_rect = tutorial_overlay_rects.get("close_rect") if "tutorial_overlay_rects" in locals() else None
+                    if close_rect is not None and close_rect.collidepoint(mouse):
+                        tutorial_open = False
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 dragging = False
@@ -307,10 +335,12 @@ def run_home_menu():
                 difficulty = difficulty_from_percent(slider_percent)
 
             if event.type == pygame.MOUSEMOTION and settings_dragging and state == SETTINGS:
-                sound_volume = (event.pos[0] - volume_slider.x) / max(1, volume_slider.width)
+                settings.set_sound_volume((event.pos[0] - volume_slider.x) / max(1, volume_slider.width))
+                if music is not None:
+                    music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
 
         slider_percent = max(0.0, min(1.0, slider_percent))
-        sound_volume = max(0.0, min(1.0, sound_volume))
+        settings.set_sound_volume(clamp01(settings.sound_volume))
         if not dragging:
             slider_percent = _difficulty_to_percent(difficulty)
 
@@ -329,6 +359,7 @@ def run_home_menu():
             screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
 
         elif state == CHOOSE_MODE:
+            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
             draw_choose_gamemode_scene(
                 screen,
                 panel,
@@ -339,6 +370,7 @@ def run_home_menu():
             )
 
         elif state == DIFFICULTY:
+            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
             shared_rects["knob_x"] = int(slider_rect.x + slider_rect.width * slider_percent)
             draw_choose_diff_scene(
                 screen,
@@ -352,15 +384,7 @@ def run_home_menu():
 
         elif state == TUTORIAL:
             draw_settings_icon(screen, settings_icon_rect, palette)
-            draw_tutorial_scene(
-                screen,
-                panel,
-                {"main": main_font, "body": body_font},
-                palette,
-                back_rect,
-                tutorial_lines,
-                icons["back"],
-            )
+            screen.blit(icons["tutorial"], tutorial_icon_rect.topleft)
         else:
             draw_setting_scene(
                 screen,
@@ -372,10 +396,21 @@ def run_home_menu():
                 {
                     "sound_checkbox": sound_checkbox,
                     "volume_slider": volume_slider,
-                    "volume_knob_x": int(volume_slider.x + volume_slider.width * sound_volume),
-                    "sound_enabled": sound_enabled,
-                    "sound_volume": sound_volume,
+                    "volume_knob_x": int(volume_slider.x + volume_slider.width * settings.sound_volume),
+                    "sound_enabled": settings.sound_enabled,
+                    "sound_volume": settings.sound_volume,
                 },
+            )
+
+        tutorial_overlay_rects = {}
+        if tutorial_open:
+            tutorial_overlay_rects = draw_tutorial_overlay(
+                screen,
+                panel,
+                {"main": main_font, "body": body_font},
+                palette,
+                tutorial_lines,
+                close_label="Dong",
             )
 
         pygame.display.flip()

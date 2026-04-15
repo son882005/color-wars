@@ -31,8 +31,8 @@ def _render_wrapped_lines(font, text, color, max_width):
 def draw_tutorial_scene(screen, panel, fonts, colors, back_rect, tutorial_lines, back_icon):
     """Draw tutorial content scene."""
     screen.blit(back_icon, back_rect.topleft)
-    title = fonts["main"].render("How to Play", True, colors["text_main"])
-    subtitle = fonts["body"].render("Core mechanics, strategy, and shortcuts", True, colors["subtitle"])
+    title = fonts["main"].render("Cach choi", True, colors["text_main"])
+    subtitle = fonts["body"].render("Co che co ban, meo chien thuat va phim tat", True, colors["subtitle"])
     screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 84)))
     screen.blit(subtitle, subtitle.get_rect(center=(panel.centerx, panel.y + 120)))
 

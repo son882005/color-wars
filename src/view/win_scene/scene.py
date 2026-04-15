@@ -48,10 +48,10 @@ def draw_win_scene(screen, winner, icons):
     body_font = pygame.font.SysFont("segoeui", max(18, int(panel.height * 0.06)), bold=True)
     button_font = pygame.font.SysFont("segoeui", 26, bold=True)
 
-    winner_name = "BLUE PLAYER" if winner == PLAYER_BLUE else "RED PLAYER"
-    title = title_font.render("MATCH ENDED", True, (32, 45, 56))
-    winner_text = body_font.render(f"Winner: {winner_name}", True, accent)
-    subtitle = body_font.render("Choose what to do next", True, (68, 84, 98))
+    winner_name = "NGUOI CHOI XANH" if winner == PLAYER_BLUE else "NGUOI CHOI DO"
+    title = title_font.render("TRAN DA KET THUC", True, (32, 45, 56))
+    winner_text = body_font.render(f"Ben thang: {winner_name}", True, accent)
+    subtitle = body_font.render("Chon hanh dong tiep theo", True, (68, 84, 98))
 
     screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 88)))
     screen.blit(winner_text, winner_text.get_rect(center=(panel.centerx, panel.y + 150)))
@@ -60,7 +60,7 @@ def draw_win_scene(screen, winner, icons):
     screen.blit(icons["restart"], restart_rect.topleft)
 
     pygame.draw.rect(screen, accent, home_rect, border_radius=16)
-    home_label = button_font.render("HOME", True, (255, 255, 255))
+    home_label = button_font.render("TRANG CHU", True, (255, 255, 255))
     screen.blit(home_label, home_label.get_rect(center=home_rect.center))
 
     return rects

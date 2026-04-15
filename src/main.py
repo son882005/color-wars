@@ -9,6 +9,8 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.game.loop import run_game
+from src.game.audio import get_music_manager
+from src.game.settings import AppSettings
 from src.view.home_scene import run_home_menu
 
 
@@ -17,16 +19,21 @@ def main():
 
     # Khởi tạo toàn bộ subsystem của pygame trước khi render/game loop.
     pygame.init()
+    settings = AppSettings()
+    music = get_music_manager()
     try:
         while True:
-            launch_config = run_home_menu()
+            music.start_new_menu_session()
+            music.enter_menu()
+            launch_config = run_home_menu(settings=settings, music=music)
             if launch_config is None:
                 break
 
             result = run_game(
                 game_mode=launch_config.get("game_mode", "pvbot"),
                 difficulty=launch_config.get("difficulty", "easy"),
-                audio=launch_config.get("audio", {}),
+                settings=settings,
+                music=music,
             )
             if result is None:
                 break

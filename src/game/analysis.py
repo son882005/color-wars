@@ -2,6 +2,7 @@
 
 from src.controller import get_scores
 from src.engine.rules import PLAYER_BLUE, PLAYER_RED
+from src.engine.rules import get_valid_moves
 
 
 def _sum_dots(state, owner):
@@ -18,9 +19,21 @@ def estimate_win_chances(state):
     blue_cells, red_cells = get_scores(state)
     blue_dots = _sum_dots(state, PLAYER_BLUE)
     red_dots = _sum_dots(state, PLAYER_RED)
+    blue_moves = len(get_valid_moves(state.board, PLAYER_BLUE))
+    red_moves = len(get_valid_moves(state.board, PLAYER_RED))
 
-    blue_pressure = blue_cells * 1.45 + blue_dots * 0.35
-    red_pressure = red_cells * 1.45 + red_dots * 0.35
+    blue_hot = 0
+    red_hot = 0
+    for row in range(state.grid_size):
+        for col in range(state.grid_size):
+            owner = state.board[row][col]
+            if owner == PLAYER_BLUE and state.dots[row][col] >= 3:
+                blue_hot += 1
+            elif owner == PLAYER_RED and state.dots[row][col] >= 3:
+                red_hot += 1
+
+    blue_pressure = blue_cells * 1.35 + blue_dots * 0.34 + blue_moves * 0.24 + blue_hot * 0.62
+    red_pressure = red_cells * 1.35 + red_dots * 0.34 + red_moves * 0.24 + red_hot * 0.62
 
     if blue_pressure == 0 and red_pressure == 0:
         return 50.0, 50.0

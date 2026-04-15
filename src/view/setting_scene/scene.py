@@ -14,9 +14,9 @@ def draw_settings_icon(screen, rect, colors):
 def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, controls):
     """Draw settings scene content."""
     screen.blit(back_icon, back_rect.topleft)
-    title = fonts["main"].render("Settings", True, colors["text_main"])
-    subtitle = fonts["body"].render("Audio, display, and match preferences", True, colors["subtitle"])
-    hint = fonts["body"].render("Music control is live, future toggles can be added here.", True, colors["text_main"])
+    title = fonts["main"].render("Cai dat", True, colors["text_main"])
+    subtitle = fonts["body"].render("Am thanh, hien thi va tuy chon tran dau", True, colors["subtitle"])
+    hint = fonts["body"].render("Tat mo nhac se tam dung va tiep tuc ngay lap tuc.", True, colors["text_main"])
 
     screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 84)))
     screen.blit(subtitle, subtitle.get_rect(center=(panel.centerx, panel.y + 150)))
@@ -38,7 +38,7 @@ def draw_setting_scene(screen, panel, fonts, colors, back_rect, back_icon, contr
         ]
         pygame.draw.lines(screen, colors["btn_green"], False, tick_points, 3)
 
-    volume_label = fonts["body"].render(f"Volume {int(sound_volume * 100)}%", True, colors["text_main"])
+    volume_label = fonts["body"].render(f"Am luong {int(sound_volume * 100)}%", True, colors["text_main"])
     screen.blit(volume_label, (slider_rect.x, slider_rect.y - 30))
 
     pygame.draw.rect(screen, (216, 224, 230), slider_rect, border_radius=8)
