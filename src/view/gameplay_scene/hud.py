@@ -12,21 +12,27 @@ from ..constants import BLUE_COLOR, HUD_TEXT_COLOR, RED_COLOR
 def get_status_lines(game_mode=None, difficulty=None, winner=None):
     """Build status lines shown on the left HUD panel."""
     mode_name = "PvP" if game_mode == "pvp" else "PvE"
+    if game_mode == "pvp":
+        if winner is None:
+            return [f"Chế độ: {mode_name}"]
+        winner_name = "Xanh" if winner == PLAYER_BLUE else "Đỏ"
+        return [f"Chế độ: {mode_name}", f"Thắng: {winner_name}"]
+
     difficulty_name = {
-        "easy": "DE",
-        "medium": "TRUNG BINH",
-        "hard": "KHO",
+        "easy": "DỄ",
+        "medium": "TRUNG BÌNH",
+        "hard": "KHÓ",
     }.get((difficulty or "easy").lower(), (difficulty or "easy").upper())
     if winner is None:
-        return [f"Che do: {mode_name}", f"Do kho bot: {difficulty_name}"]
+        return [f"Chế độ: {mode_name}", f"Độ khó bot: {difficulty_name}"]
 
-    winner_name = "Xanh" if winner == PLAYER_BLUE else "Do"
-    return [f"Che do: {mode_name}", f"Do kho bot: {difficulty_name}", f"Thang: {winner_name}"]
+    winner_name = "Xanh" if winner == PLAYER_BLUE else "Đỏ"
+    return [f"Chế độ: {mode_name}", f"Độ khó bot: {difficulty_name}", f"Thắng: {winner_name}"]
 
 
 def get_control_lines():
     """Build controls shown on the right HUD panel."""
-    return ["M: Doi che do", "R: Choi lai", "H: Huong dan", "F11: Toan man hinh"]
+    return ["M: Đổi chế độ", "R: Chơi lại", "H: Hướng dẫn", "F11: Toàn màn hình"]
 
 
 def get_move_history_entries(state, limit=6):
@@ -121,7 +127,7 @@ def draw_win_rate_panel(screen, state, layout, game_mode=None, difficulty=None):
 
     title_font = pygame.font.SysFont("segoeui", max(15, int(height * 0.028)), bold=True)
     body_font = pygame.font.SysFont("segoeui", max(13, int(height * 0.024)), bold=True)
-    title = title_font.render("Ty le thang", True, HUD_TEXT_COLOR)
+    title = title_font.render("Tỷ lệ thắng", True, HUD_TEXT_COLOR)
     screen.blit(title, (panel.x + 14, panel.y + 12))
 
     blue_chance, red_chance = estimate_win_chances(state)
@@ -166,12 +172,12 @@ def draw_move_history_panel(screen, state, layout):
 
     title_font = pygame.font.SysFont("segoeui", max(15, int(height * 0.028)), bold=True)
     item_font = pygame.font.SysFont("consolas", max(12, int(height * 0.022)))
-    title = title_font.render("Nuoc di gan day", True, HUD_TEXT_COLOR)
+    title = title_font.render("Nước đi gần đây", True, HUD_TEXT_COLOR)
     screen.blit(title, (panel.x + 14, panel.y + 12))
 
     entries = get_move_history_entries(state, limit=6)
     if not entries:
-        empty = item_font.render("Chua co nuoc di", True, HUD_TEXT_COLOR)
+        empty = item_font.render("Chưa có nước đi", True, HUD_TEXT_COLOR)
         screen.blit(empty, (panel.x + 14, panel.y + 44))
         return
 

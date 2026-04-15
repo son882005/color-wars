@@ -6,7 +6,7 @@ from src.game.settings import AppSettings, clamp01
 from src.game.core import CoreSystems
 from src.view.choose_diff_scene import draw_choose_diff_scene
 from src.view.choose_gamemode_scene import draw_choose_gamemode_scene
-from src.view.commons import draw_tutorial_overlay, make_icon_surface
+from src.view.commons import draw_interactive_button, draw_tutorial_overlay, make_icon_surface
 from src.view.setting_scene import draw_setting_scene, draw_settings_icon
 
 from ..window import drawScreen, toggle_fullscreen
@@ -55,12 +55,16 @@ def _difficulty_to_percent(difficulty):
 
 
 def _draw_button(screen, rect, label, color, font):
-    pygame.draw.rect(screen, color, rect, border_radius=max(12, rect.height // 4))
-    pygame.draw.rect(screen, (255, 248, 235), rect, 2, border_radius=max(12, rect.height // 4))
-    shadow = font.render(label, True, (30, 24, 22))
-    screen.blit(shadow, shadow.get_rect(center=(rect.centerx + 1, rect.centery + 1)))
-    text = font.render(label, True, (255, 248, 235))
-    screen.blit(text, text.get_rect(center=rect.center))
+    draw_interactive_button(
+        screen,
+        rect,
+        label,
+        color,
+        font,
+        text_color=(255, 248, 235),
+        border_color=(255, 248, 235),
+        border_radius=max(12, rect.height // 4),
+    )
 
 
 def _draw_panel(screen, rect):
@@ -120,6 +124,9 @@ def run_home_menu(settings=None, music=None, core=None):
         music = core.music
 
     settings = settings or AppSettings()
+    existing_surface = pygame.display.get_surface()
+    if existing_surface is not None:
+        settings.set_fullscreen(bool(existing_surface.get_flags() & pygame.FULLSCREEN))
     is_fullscreen = bool(settings.fullscreen)
     screen = drawScreen(fullscreen=is_fullscreen)
     clock = pygame.time.Clock()
@@ -146,6 +153,8 @@ def run_home_menu(settings=None, music=None, core=None):
     settings_return_state = MENU
     tutorial_open = False
     settings_dragging = False
+    pending_sound_enabled = settings.sound_enabled
+    pending_sound_volume = settings.sound_volume
 
     if music is not None:
         music.enter_menu()
@@ -179,17 +188,22 @@ def run_home_menu(settings=None, music=None, core=None):
         knob_x = int(slider_rect.x + slider_rect.width * slider_percent)
         play_match_btn = pygame.Rect(center_x - menu_btn_w // 2, panel.bottom - menu_btn_h - 26, menu_btn_w, menu_btn_h)
 
-        tutorial_lines = [
-            "Muc tieu: chiem nhieu o hon doi thu bang cach kich no day chuyen.",
-            "Luot choi: o dau tran chi duoc dat vao o trong; sau do duoc tang quan tren o minh dang so huu.",
-            "No day chuyen: o dat 4 cham se no, lan sang o ke ben va co the kich hoat cac vu no tiep theo.",
-            "Meo nhanh: uu tien canh ban co, ep doi thu vao nuoc di yeu, va de danh nuoc no lon de dao chieu the tran.",
-            "Phim tat: Chuot trai dat nuoc, M doi che do, R choi lai, F11 toan man hinh, Esc quay lai.",
-        ]
+        settings_w = min(560, width - 36)
+        settings_h = min(360, height - 36)
+        settings_panel = pygame.Rect((width - settings_w) // 2, (height - settings_h) // 2, settings_w, settings_h)
+        settings_back_rect = pygame.Rect(settings_panel.x + 16, settings_panel.y + 16, 42, 42)
+        settings_volume_slider = pygame.Rect(settings_panel.centerx - 170, settings_panel.y + int(settings_panel.height * 0.50), 300, 16)
+        settings_sound_checkbox = pygame.Rect(settings_volume_slider.right + 16, settings_volume_slider.centery - 12, 24, 24)
+        settings_apply_btn = pygame.Rect(settings_panel.centerx - 90, settings_panel.bottom - int(settings_panel.height * 0.17), 180, 40)
+        settings_volume_knob_x = int(settings_volume_slider.x + settings_volume_slider.width * pending_sound_volume)
 
-        volume_slider = pygame.Rect(panel.centerx - 160, panel.y + int(panel.height * 0.56), 290, 16)
-        sound_checkbox = pygame.Rect(volume_slider.right + 14, volume_slider.centery - 12, 24, 24)
-        volume_knob_x = int(volume_slider.x + volume_slider.width * settings.sound_volume)
+        tutorial_lines = [
+            "Giới thiệu: Color Wars là game chiến thuật theo lượt, mục tiêu là chiếm nhiều ô hơn đối thủ.",
+            "Luật chơi: lượt đầu chỉ đặt vào ô trống; các lượt sau chỉ được tăng quân ở ô bạn đang sở hữu.",
+            "Nổ dây chuyền: ô đạt 4 chấm sẽ nổ, lan sang ô kề bên và có thể kích hoạt chuỗi nổ liên tiếp.",
+            "Mẹo chơi: ưu tiên kiểm soát cạnh bàn cờ, tích lũy ô 3 chấm và chờ thời điểm tạo combo lớn.",
+            "Phím tắt: Chuột trái để đi, M đổi chế độ, R chơi lại, H mở hướng dẫn, F11 bật/tắt fullscreen, Esc quay lại.",
+        ]
 
         palette = {
             "title": TITLE_COLOR,
@@ -215,9 +229,9 @@ def run_home_menu(settings=None, music=None, core=None):
             "play_match_btn": play_match_btn,
             "settings_icon_rect": settings_icon_rect,
             "tutorial_icon_rect": tutorial_icon_rect,
-            "sound_checkbox": sound_checkbox,
-            "volume_slider": volume_slider,
-            "volume_knob_x": volume_knob_x,
+            "sound_checkbox": settings_sound_checkbox,
+            "volume_slider": settings_volume_slider,
+            "volume_knob_x": settings_volume_knob_x,
         }
 
         for event in pygame.event.get():
@@ -256,6 +270,8 @@ def run_home_menu(settings=None, music=None, core=None):
                         tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = MENU
+                        pending_sound_enabled = settings.sound_enabled
+                        pending_sound_volume = settings.sound_volume
                         state = SETTINGS
                     elif quit_btn.collidepoint(mouse):
                         return None
@@ -269,6 +285,8 @@ def run_home_menu(settings=None, music=None, core=None):
                         tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = CHOOSE_MODE
+                        pending_sound_enabled = settings.sound_enabled
+                        pending_sound_volume = settings.sound_volume
                         state = SETTINGS
                     elif pvp_btn.collidepoint(mouse):
                         selected_mode = MODE_PVP
@@ -290,6 +308,8 @@ def run_home_menu(settings=None, music=None, core=None):
                         tutorial_open = True
                     elif settings_icon_rect.collidepoint(mouse):
                         settings_return_state = DIFFICULTY
+                        pending_sound_enabled = settings.sound_enabled
+                        pending_sound_volume = settings.sound_volume
                         state = SETTINGS
                     elif play_match_btn.collidepoint(mouse):
                         return {
@@ -314,18 +334,20 @@ def run_home_menu(settings=None, music=None, core=None):
                     if tutorial_open:
                         tutorial_open = False
                         continue
-                    if back_rect.collidepoint(mouse):
+                    if settings_back_rect.collidepoint(mouse):
                         state = settings_return_state
-                    elif sound_checkbox.collidepoint(mouse):
-                        settings.set_sound_enabled(not settings.sound_enabled)
+                    elif settings_apply_btn.collidepoint(mouse):
+                        settings.set_sound_enabled(pending_sound_enabled)
+                        settings.set_sound_volume(pending_sound_volume)
                         if music is not None:
                             music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
-                    elif volume_slider.collidepoint(mouse):
+                        state = settings_return_state
+                    elif settings_sound_checkbox.collidepoint(mouse):
+                        pending_sound_enabled = not pending_sound_enabled
+                    elif settings_volume_slider.collidepoint(mouse):
                         settings_dragging = True
-                        settings.set_sound_volume((mouse[0] - volume_slider.x) / max(1, volume_slider.width))
-                        if music is not None:
-                            music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
-                    elif abs(mouse[0] - volume_knob_x) <= 20 and abs(mouse[1] - volume_slider.centery) <= 20:
+                        pending_sound_volume = clamp01((mouse[0] - settings_volume_slider.x) / max(1, settings_volume_slider.width))
+                    elif abs(mouse[0] - settings_volume_knob_x) <= 20 and abs(mouse[1] - settings_volume_slider.centery) <= 20:
                         settings_dragging = True
 
                 if tutorial_open:
@@ -342,12 +364,10 @@ def run_home_menu(settings=None, music=None, core=None):
                 difficulty = difficulty_from_percent(slider_percent)
 
             if event.type == pygame.MOUSEMOTION and settings_dragging and state == SETTINGS:
-                settings.set_sound_volume((event.pos[0] - volume_slider.x) / max(1, volume_slider.width))
-                if music is not None:
-                    music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
+                pending_sound_volume = clamp01((event.pos[0] - settings_volume_slider.x) / max(1, settings_volume_slider.width))
 
         slider_percent = max(0.0, min(1.0, slider_percent))
-        settings.set_sound_volume(clamp01(settings.sound_volume))
+        pending_sound_volume = clamp01(pending_sound_volume)
         if not dragging:
             slider_percent = _difficulty_to_percent(difficulty)
 
@@ -395,17 +415,19 @@ def run_home_menu(settings=None, music=None, core=None):
         else:
             draw_setting_scene(
                 screen,
-                panel,
+                settings_panel,
                 {"main": main_font, "body": body_font},
                 palette,
-                back_rect,
+                settings_back_rect,
                 icons["back"],
                 {
-                    "sound_checkbox": sound_checkbox,
-                    "volume_slider": volume_slider,
-                    "volume_knob_x": int(volume_slider.x + volume_slider.width * settings.sound_volume),
-                    "sound_enabled": settings.sound_enabled,
-                    "sound_volume": settings.sound_volume,
+                    "sound_checkbox": settings_sound_checkbox,
+                    "volume_slider": settings_volume_slider,
+                    "volume_knob_x": int(settings_volume_slider.x + settings_volume_slider.width * pending_sound_volume),
+                    "sound_enabled": pending_sound_enabled,
+                    "sound_volume": pending_sound_volume,
+                    "apply_btn": settings_apply_btn,
+                    "show_back": True,
                 },
             )
 
@@ -417,7 +439,7 @@ def run_home_menu(settings=None, music=None, core=None):
                 {"main": main_font, "body": body_font},
                 palette,
                 tutorial_lines,
-                close_label="Dong",
+                close_label="Đóng",
             )
 
         pygame.display.flip()

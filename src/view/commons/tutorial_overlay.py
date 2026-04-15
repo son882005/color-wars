@@ -2,6 +2,8 @@
 
 import pygame
 
+from src.view.commons.ui_components import blit_fitted_text, draw_interactive_button
+
 
 def _render_wrapped_lines(font, text, color, max_width):
     words = text.split(" ")
@@ -20,7 +22,19 @@ def _render_wrapped_lines(font, text, color, max_width):
     return lines
 
 
-def draw_tutorial_overlay(screen, panel, fonts, colors, lines, close_label="Dong"):
+def _line_color(line):
+    """Highlight key tutorial phrases for faster scanning."""
+    lowered = line.lower()
+    if "nổ dây chuyền" in lowered or "combo" in lowered:
+        return (255, 208, 132)
+    if "4 chấm" in lowered:
+        return (255, 188, 120)
+    if "phím tắt" in lowered:
+        return (166, 216, 255)
+    return (238, 246, 255)
+
+
+def draw_tutorial_overlay(screen, panel, fonts, colors, lines, close_label="Đóng"):
     """Draw translucent overlay with beginner tutorial content.
 
     Returns:
@@ -39,33 +53,45 @@ def draw_tutorial_overlay(screen, panel, fonts, colors, lines, close_label="Dong
         overlay_h,
     )
 
-    pygame.draw.rect(screen, (248, 243, 232), overlay, border_radius=18)
-    pygame.draw.rect(screen, colors["btn_slate"], overlay, 3, border_radius=18)
+    pygame.draw.rect(screen, (28, 39, 53), overlay, border_radius=18)
+    pygame.draw.rect(screen, (160, 185, 208), overlay, 3, border_radius=18)
 
-    title = fonts["main"].render("Huong dan nhanh", True, colors["text_main"])
-    subtitle = fonts["body"].render("Meo co ban cho nguoi moi", True, colors["subtitle"])
-    screen.blit(title, title.get_rect(center=(overlay.centerx, overlay.y + 48)))
-    screen.blit(subtitle, subtitle.get_rect(center=(overlay.centerx, overlay.y + 84)))
+    blit_fitted_text(
+        screen,
+        fonts["main"],
+        "Hướng dẫn nhanh",
+        (240, 247, 255),
+        (overlay.centerx, overlay.y + 48),
+        overlay.width - 42,
+        52,
+    )
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Tổng quan cho người mới",
+        (198, 216, 232),
+        (overlay.centerx, overlay.y + 84),
+        overlay.width - 42,
+        34,
+    )
 
-    text_left = overlay.x + 22
-    text_max_width = overlay.width - 44
-    line_y = overlay.y + 120
+    text_max_width = overlay.width - 120
+    line_y = overlay.y + 126
     step_idx = 1
     for line in lines:
-        wrapped = _render_wrapped_lines(fonts["body"], f"{step_idx}. {line}", colors["text_main"], text_max_width)
+        rendered_color = _line_color(line)
+        wrapped = _render_wrapped_lines(fonts["body"], f"{step_idx}. {line}", rendered_color, text_max_width)
         for text in wrapped:
             if line_y + text.get_height() > overlay.bottom - 64:
                 break
-            screen.blit(text, (text_left, line_y))
-            line_y += max(19, int(overlay.height * 0.052))
-        line_y += 4
+            screen.blit(text, text.get_rect(center=(overlay.centerx, line_y + text.get_height() // 2)))
+            line_y += max(21, int(overlay.height * 0.05))
+        line_y += 10
         step_idx += 1
         if line_y > overlay.bottom - 64:
             break
 
     close_rect = pygame.Rect(overlay.right - 128, overlay.bottom - 48, 96, 32)
-    pygame.draw.rect(screen, colors["btn_blue"], close_rect, border_radius=8)
-    label = fonts["body"].render(close_label, True, (255, 255, 255))
-    screen.blit(label, label.get_rect(center=close_rect.center))
+    draw_interactive_button(screen, close_rect, close_label, (66, 146, 212), fonts["body"], border_radius=8)
 
     return {"overlay": overlay, "close_rect": close_rect}

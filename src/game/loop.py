@@ -10,6 +10,7 @@ from src.game.core import CoreSystems
 from src.game.state import GameState
 from src import view
 from src.view.commons import draw_tutorial_overlay, make_icon_surface
+from src.view.setting_scene import draw_setting_scene
 
 MODE_PVP = "pvp"
 MODE_PVBOT = "pvbot"
@@ -35,6 +36,9 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
         difficulty = "medium"
 
     settings = settings or AppSettings()
+    existing_surface = pygame.display.get_surface()
+    if existing_surface is not None:
+        settings.set_fullscreen(bool(existing_surface.get_flags() & pygame.FULLSCREEN))
 
     state = GameState()
 
@@ -50,6 +54,8 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
     settings_open = False
     tutorial_open = False
     settings_dragging = False
+    pending_sound_enabled = settings.sound_enabled
+    pending_sound_volume = settings.sound_volume
 
     if music is not None:
         music.enter_gameplay()
@@ -67,14 +73,18 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
 
     def get_settings_rects():
         width, height = screen.get_size()
-        panel = pygame.Rect((width - 400) // 2, (height - 250) // 2, 400, 250)
-        slider = pygame.Rect(panel.x + 34, panel.y + 162, panel.width - 112, 16)
-        checkbox = pygame.Rect(slider.right + 14, slider.centery - 12, 24, 24)
-        knob_x = int(slider.x + slider.width * clamp01(settings.sound_volume))
+        panel_w = min(560, width - 36)
+        panel_h = min(360, height - 36)
+        panel = pygame.Rect((width - panel_w) // 2, (height - panel_h) // 2, panel_w, panel_h)
+        slider = pygame.Rect(panel.centerx - 170, panel.y + int(panel.height * 0.50), 300, 16)
+        checkbox = pygame.Rect(slider.right + 16, slider.centery - 12, 24, 24)
+        apply_btn = pygame.Rect(panel.centerx - 90, panel.bottom - int(panel.height * 0.17), 180, 40)
+        knob_x = int(slider.x + slider.width * clamp01(pending_sound_volume))
         return {
             "panel": panel,
             "checkbox": checkbox,
             "slider": slider,
+            "apply_btn": apply_btn,
             "knob_x": knob_x,
         }
 
@@ -86,40 +96,32 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
 
     def draw_settings_overlay():
         rects = get_settings_rects()
-        panel = rects["panel"]
-        checkbox = rects["checkbox"]
-        slider = rects["slider"]
-        knob_x = rects["knob_x"]
-
-        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-        overlay.fill((8, 16, 26, 110))
-        screen.blit(overlay, (0, 0))
-
-        pygame.draw.rect(screen, (244, 248, 252), panel, border_radius=18)
-        pygame.draw.rect(screen, (86, 111, 132), panel, 3, border_radius=18)
-
-        title_font = pygame.font.SysFont("segoeui", 30, bold=True)
-        body_font = pygame.font.SysFont("segoeui", 23, bold=False)
-        title = title_font.render("Cai dat tran dau", True, (35, 52, 66))
-        screen.blit(title, (panel.x + 30, panel.y + 28))
-
-        pygame.draw.rect(screen, (238, 244, 248), checkbox, border_radius=5)
-        pygame.draw.rect(screen, (86, 111, 132), checkbox, 2, border_radius=5)
-        if settings.sound_enabled:
-            points = [
-                (checkbox.x + 5, checkbox.centery),
-                (checkbox.x + 10, checkbox.bottom - 6),
-                (checkbox.right - 5, checkbox.y + 6),
-            ]
-            pygame.draw.lines(screen, (75, 165, 98), False, points, 3)
-
-        volume_text = body_font.render(f"Am luong {int(settings.sound_volume * 100)}%", True, (35, 52, 66))
-        screen.blit(volume_text, (slider.x, slider.y - 34))
-        pygame.draw.rect(screen, (212, 223, 232), slider, border_radius=8)
-        fill_rect = pygame.Rect(slider.x, slider.y, max(1, knob_x - slider.x), slider.height)
-        pygame.draw.rect(screen, (72, 137, 196), fill_rect, border_radius=8)
-        pygame.draw.circle(screen, (255, 255, 255), (knob_x, slider.centery), 11)
-        pygame.draw.circle(screen, (72, 137, 196), (knob_x, slider.centery), 8)
+        draw_setting_scene(
+            screen,
+            rects["panel"],
+            {
+                "main": pygame.font.SysFont("segoeui", max(26, int(screen.get_height() * 0.05)), bold=True),
+                "body": pygame.font.SysFont("segoeui", max(17, int(screen.get_height() * 0.028))),
+            },
+            {
+                "text_main": (240, 247, 255),
+                "subtitle": (198, 216, 232),
+                "btn_slate": (120, 140, 160),
+                "btn_green": (75, 165, 98),
+                "btn_blue": (72, 137, 196),
+            },
+            None,
+            None,
+            {
+                "sound_checkbox": rects["checkbox"],
+                "volume_slider": rects["slider"],
+                "volume_knob_x": rects["knob_x"],
+                "sound_enabled": pending_sound_enabled,
+                "sound_volume": pending_sound_volume,
+                "apply_btn": rects["apply_btn"],
+                "show_back": False,
+            },
+        )
 
         return rects
 
@@ -215,6 +217,9 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
                     tutorial_open = not tutorial_open
                     continue
                 if corner_rects["settings"].collidepoint(mouse):
+                    if not settings_open:
+                        pending_sound_enabled = settings.sound_enabled
+                        pending_sound_volume = settings.sound_volume
                     settings_open = not settings_open
                     continue
 
@@ -222,16 +227,19 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
                     rects = get_settings_rects()
                     checkbox = rects["checkbox"]
                     slider = rects["slider"]
+                    apply_btn = rects["apply_btn"]
                     knob_x = rects["knob_x"]
-                    if checkbox.collidepoint(mouse):
-                        settings.set_sound_enabled(not settings.sound_enabled)
+                    if apply_btn.collidepoint(mouse):
+                        settings.set_sound_enabled(pending_sound_enabled)
+                        settings.set_sound_volume(pending_sound_volume)
                         if music is not None:
                             music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
+                        settings_open = False
+                    elif checkbox.collidepoint(mouse):
+                        pending_sound_enabled = not pending_sound_enabled
                     elif slider.collidepoint(mouse):
                         settings_dragging = True
-                        settings.set_sound_volume((mouse[0] - slider.x) / max(1, slider.width))
-                        if music is not None:
-                            music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
+                        pending_sound_volume = clamp01((mouse[0] - slider.x) / max(1, slider.width))
                     elif abs(mouse[0] - knob_x) <= 18 and abs(mouse[1] - slider.centery) <= 18:
                         settings_dragging = True
                     continue
@@ -257,9 +265,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
                 settings_dragging = False
             elif event.type == pygame.MOUSEMOTION and settings_dragging and settings_open:
                 slider = get_settings_rects()["slider"]
-                settings.set_sound_volume((event.pos[0] - slider.x) / max(1, slider.width))
-                if music is not None:
-                    music.apply_audio_preferences(settings.sound_enabled, settings.sound_volume)
+                pending_sound_volume = clamp01((event.pos[0] - slider.x) / max(1, slider.width))
 
         if game_mode == MODE_PVBOT and state.winner is None and state.current_player == PLAYER_RED:
             move = get_ai_move(state.board, state.dots, difficulty)
@@ -305,10 +311,11 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
         tutorial_overlay_rects = {}
         if tutorial_open and state.winner is None:
             tutorial_lines = [
-                "Muc tieu: no day chuyen de chiem ban co.",
-                "Nuoc dau tien dat vao o trong; cac nuoc sau tang quan tren o cua ban.",
-                "Khi mot o dat 4 cham se no va lan sang o ke ben.",
-                "Canh ban co thuong de phong thu, trung tam de tan cong day chuyen.",
+                "Giới thiệu: Color Wars là game chiến thuật theo lượt, mục tiêu là kiểm soát bàn cờ.",
+                "Luật chơi: lượt đầu chỉ đặt vào ô trống, các lượt sau chỉ tăng quân ở ô thuộc về bạn.",
+                "Nổ dây chuyền: ô có 4 chấm sẽ nổ và lan sang các ô kề bên, tạo combo liên tiếp.",
+                "Mẹo chơi: giữ cạnh bàn cờ, tích lũy ô 3 chấm và tận dụng thời điểm để lật thế trận.",
+                "Phím tắt: M đổi chế độ, R chơi lại, H mở hướng dẫn, F11 bật/tắt fullscreen, Esc quay lại.",
             ]
             tutorial_overlay_rects = draw_tutorial_overlay(
                 screen,
@@ -324,7 +331,7 @@ def run_game(game_mode=MODE_PVBOT, difficulty="easy", settings=None, music=None,
                     "btn_slate": (86, 111, 132),
                 },
                 tutorial_lines,
-                close_label="Dong",
+                close_label="Đóng",
             )
 
         if state.winner is not None:

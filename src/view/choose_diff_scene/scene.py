@@ -2,6 +2,8 @@
 
 import pygame
 
+from src.view.commons import blit_fitted_text
+
 
 def draw_choose_diff_scene(screen, panel, fonts, colors, rects, difficulty, icons):
     """Draw difficulty picker scene."""
@@ -13,12 +15,19 @@ def draw_choose_diff_scene(screen, panel, fonts, colors, rects, difficulty, icon
     screen.blit(icon, icon.get_rect(center=(panel.centerx, panel.y + 170)))
 
     localized_diff = {
-        "easy": "DE",
-        "medium": "TRUNG BINH",
-        "hard": "KHO",
+        "easy": "DỄ",
+        "medium": "TRUNG BÌNH",
+        "hard": "KHÓ",
     }.get(difficulty, difficulty.upper())
-    diff_label = fonts["main"].render(localized_diff, True, current_color)
-    screen.blit(diff_label, diff_label.get_rect(center=(panel.centerx, panel.y + 270)))
+    blit_fitted_text(
+        screen,
+        fonts["main"],
+        localized_diff,
+        current_color,
+        (panel.centerx, panel.y + 270),
+        panel.width - 42,
+        52,
+    )
 
     slider_rect = rects["slider_rect"]
     knob_x = rects["knob_x"]
@@ -28,7 +37,14 @@ def draw_choose_diff_scene(screen, panel, fonts, colors, rects, difficulty, icon
     pygame.draw.circle(screen, (255, 255, 255), (knob_x, slider_rect.centery), 15)
     pygame.draw.circle(screen, current_color, (knob_x, slider_rect.centery), 11)
 
-    tip = fonts["body"].render("Keo thanh truot de chon do kho cua bot", True, colors["subtitle"])
-    screen.blit(tip, tip.get_rect(center=(panel.centerx, slider_rect.bottom + 28)))
+    blit_fitted_text(
+        screen,
+        fonts["body"],
+        "Kéo thanh trượt để chọn độ khó của bot",
+        colors["subtitle"],
+        (panel.centerx, slider_rect.bottom + 28),
+        panel.width - 60,
+        28,
+    )
 
-    rects["draw_button"](screen, rects["play_match_btn"], "BAT DAU", current_color, fonts["button"])
+    rects["draw_button"](screen, rects["play_match_btn"], "BẮT ĐẦU", current_color, fonts["button"])
